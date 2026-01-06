@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kingdom Archive | Premium</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #b89551; --charcoal: #121212; --accent: #d4af37; }
+        body { background: #fafafa; font-family: 'Montserrat', sans-serif; color: #222; overflow-x: hidden; }
+        
+        /* Refined Minimal Header */
+        .header-bar {
+            background: var(--charcoal); padding: 1rem 2rem;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 3px solid var(--gold); position: sticky; top: 0; z-index: 1000;
+        }
+        .archive-logo { font-family: 'Cinzel', serif; color: white; letter-spacing: 4px; font-size: 1.4rem; margin: 0; }
+        .archive-logo span { color: var(--gold); }
+
+        /* Far Right Admin Button */
+        .admin-trigger {
+            color: var(--gold); border: 1px solid var(--gold); padding: 5px 15px;
+            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;
+            text-decoration: none; transition: 0.3s; cursor: pointer;
+        }
+        .admin-trigger:hover { background: var(--gold); color: white; box-shadow: 0 0 10px var(--gold); }
+
+        /* Search Bar Refinement */
+        .search-container { background: white; padding: 40px 0 20px; text-align: center; }
+        .omni-search { 
+            max-width: 500px; margin: 0 auto; border-radius: 0; 
+            border: none; border-bottom: 2px solid #eee; padding: 12px;
+            font-size: 1.1rem; font-weight: 300; transition: 0.4s;
+        }
+        .omni-search:focus { border-color: var(--gold); box-shadow: none; outline: none; }
+
+        /* Gallery Circles */
+        .video-circle {
+            width: 135px; height: 135px; border-radius: 50%; overflow: hidden;
+            cursor: pointer; border: 4px solid white; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            margin: 0 auto; box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+        .video-circle:hover { transform: scale(1.1); border-color: var(--gold); }
+        .video-circle img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* PDF & Modal Frame */
+        #pdfArea { border: 20px solid var(--charcoal); background: white; padding: 45px; position: relative; }
+        #pdfArea::after { 
+            content: ""; position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px;
+            border: 1px solid var(--gold); pointer-events: none;
+        }
+        .modal-banner {
+            height: 180px; background-size: cover; background-position: center;
+            margin: -45px -45px 30px -45px; border-bottom: 5px solid var(--gold);
+            display: flex; align-items: center; justify-content: center;
+            color: white; text-shadow: 0 4px 12px rgba(0,0,0,0.9); font-family: 'Cinzel', serif;
+        }
+
+        .label-gold { 
+            font-size: 0.6rem; font-weight: 800; color: var(--gold); 
+            text-transform: uppercase; letter-spacing: 3px; border-bottom: 1px solid #f0f0f0;
+            margin: 20px 0 10px; display: block;
+        }
+        .admin-panel { background: #f8f9fa; border-top: 1px solid #eee; padding: 15px; display: none; }
+    </style>
+</head>
+<body>
+
+<header class="header-bar">
+    <h1 class="archive-logo">K<span>A</span></h1>
+    <div class="d-flex align-items-center">
+        <div id="adminControls" class="me-3" style="display:none;">
+            <button class="btn btn-dark btn-sm me-2" onclick="openForm()">+ New</button>
+            <button class="btn btn-outline-dark btn-sm me-2" onclick="downloadBackup()">Backup</button>
+            <label class="btn btn-outline-dark btn-sm me-2 mb-0">Restore <input type="file" hidden onchange="restoreBackup(this)"></label>
+            <button class="btn btn-link text-danger btn-sm p-0" onclick="location.reload()">Logout</button>
+        </div>
+        <a id="loginBtn" class="admin-trigger" onclick="adminLogin()">Admin Access</a>
+    </div>
+</header>
+
+<div class="search-container">
+    <h4 class="mb-3" style="font-family: 'Cinzel'; font-size: 1.2rem; letter-spacing: 2px;">Search the Repository</h4>
+    <input type="text" id="smartSearch" class="form-control omni-search" oninput="applyFilter()" placeholder="Theme, Speaker, or Topic...">
+</div>
+
+<div class="container pb-5">
+    <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-5" id="videoGrid"></div>
+</div>
+
+<div class="modal fade" id="detailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content" id="pdfArea">
+            <div id="modalBanner" class="modal-banner"><h2 id="modalTitle" class="px-3 text-center"></h2></div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-7 pe-4">
+                        <span class="label-gold">Discussions & Insights</span>
+                        <div id="modalDiscussions"></div>
+                        <span class="label-gold">Scriptural Foundations</span>
+                        <div id="modalVerses"></div>
+                        <span class="label-gold">Prophetic Declarations</span>
+                        <ul id="modalDecList" class="small fw-bold"></ul>
+                    </div>
+                    <div class="col-md-5 ps-4 border-start">
+                        <span class="label-gold">Service Information</span>
+                        <div class="small mb-3"><b>Speaker:</b> <span id="modalSpeaker"></span><br><b>Venue:</b> <span id="modalVenue"></span><br><b>Date:</b> <span id="modalDate"></span></div>
+                        <span class="label-gold">Worship Songs</span>
+                        <ul id="modalSongs" class="small"></ul>
+                        <span class="label-gold">Illustrations (Daily & Biblical)</span>
+                        <ul id="modalIllustrations" class="small"></ul>
+                        <span class="label-gold">References</span>
+                        <ul id="modalRefs" class="small fst-italic"></ul>
+                        <div class="mt-5 d-print-none">
+                            <button onclick="exportPDF()" class="btn btn-dark w-100 mb-2 rounded-0">EXPORT PDF ARCHIVE</button>
+                            <a href="#" id="modalLink" target="_blank" class="btn btn-outline-danger w-100 mb-2 rounded-0">WATCH VIDEO</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="adminModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content p-4 rounded-0">
+            <form id="adminForm">
+                <input type="hidden" id="editId">
+                <h5 class="fw-bold mb-4 border-bottom pb-2">SERMON MANAGEMENT</h5>
+                <div class="row g-3">
+                    <div class="col-md-6"><label class="small">Theme</label><input type="text" name="title" class="form-control rounded-0" required></div>
+                    <div class="col-md-3"><label class="small">Speaker</label><input type="text" name="speaker" class="form-control rounded-0" required></div>
+                    <div class="col-md-3"><label class="small">Date</label><input type="date" name="date" class="form-control rounded-0"></div>
+                    <div class="col-md-6"><label class="small">Venue</label><input type="text" name="venue" class="form-control rounded-0"></div>
+                    <div class="col-md-6"><label class="small">Video Link</label><input type="url" name="link" class="form-control rounded-0"></div>
+                    <div class="col-12"><label class="small">Thumbnail</label><input type="file" id="fileIn" class="form-control rounded-0" accept="image/*"></div>
+
+                    <div class="col-12 border p-3">
+                        <label class="fw-bold small">Discussion Sections</label>
+                        <div id="discContainer"></div>
+                        <button type="button" class="btn btn-sm btn-outline-dark mt-2" onclick="addDiscRow()">+ Add Section</button>
+                    </div>
+
+                    <div class="col-12 border p-3">
+                        <label class="fw-bold small">Verses (Auto-Load)</label>
+                        <div id="verseBox"></div>
+                        <button type="button" class="btn btn-sm btn-link" onclick="addVRow()">+ Add Verse</button>
+                    </div>
+
+                    <div class="col-md-6"><label class="small">Songs (CSV)</label><textarea name="songs" class="form-control rounded-0"></textarea></div>
+                    <div class="col-md-6"><label class="small">Declarations (List)</label><textarea name="declaration" class="form-control rounded-0"></textarea></div>
+                    <div class="col-md-6"><label class="small">Biblical Illus.</label><textarea name="biblical" class="form-control rounded-0"></textarea></div>
+                    <div class="col-md-6"><label class="small">Daily Illus.</label><textarea name="daily" class="form-control rounded-0"></textarea></div>
+                    <div class="col-12"><label class="small">References</label><textarea name="refs" class="form-control rounded-0"></textarea></div>
+                </div>
+                <button type="submit" class="btn btn-dark w-100 mt-4 rounded-0 py-3">SAVE ARCHIVE ENTRY</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<script>
+    let db = JSON.parse(localStorage.getItem('kingdom_final_v10')) || [];
+    let curImg = "";
+    let isAuth = false;
+
+    function adminLogin() {
+        if(prompt("Admin Key:") === "1234") {
+            isAuth = true;
+            document.getElementById('adminControls').style.display = "block";
+            document.getElementById('loginBtn').style.display = "none";
+            render();
+        }
+    }
+
+    function addDiscRow(h="", p="") {
+        const div = document.createElement('div');
+        div.className = "row g-2 mb-2 d-row";
+        div.innerHTML = `<div class="col-md-4"><input type="text" value="${h}" placeholder="Header" class="form-control d-h"></div>
+                         <div class="col-md-8"><textarea placeholder="Bullets..." class="form-control d-p" rows="1">${p}</textarea></div>`;
+        document.getElementById('discContainer').appendChild(div);
+    }
+
+    function addVRow(r="", n="") {
+        const div = document.createElement('div');
+        div.className = "input-group mb-1 v-row";
+        div.innerHTML = `<input type="text" value="${r}" placeholder="John 1:1" class="form-control v-ref" onblur="fetchV(this)"><textarea class="form-control v-text" rows="1">${n}</textarea>`;
+        document.getElementById('verseBox').appendChild(div);
+    }
+
+    async function fetchV(input) {
+        if(!input.value) return;
+        input.nextElementSibling.value = "Searching...";
+        const res = await fetch(`https://bible-api.com/${encodeURIComponent(input.value)}`);
+        const data = await res.json();
+        input.nextElementSibling.value = data.text ? data.text.trim() : "Not found.";
+    }
+
+    document.getElementById('fileIn').onchange = (e) => {
+        const r = new FileReader();
+        r.onload = () => curImg = r.result;
+        r.readAsDataURL(e.target.files[0]);
+    };
+
+    function downloadBackup() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
+        const dlAnchorElem = document.createElement('a');
+        dlAnchorElem.setAttribute("href", dataStr);
+        dlAnchorElem.setAttribute("download", "kingdom_archive_backup.json");
+        dlAnchorElem.click();
+    }
+
+    function restoreBackup(input) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            db = JSON.parse(e.target.result);
+            localStorage.setItem('kingdom_final_v10', JSON.stringify(db));
+            render();
+            alert("Archive Restored Successfully!");
+        };
+        reader.readAsText(input.files[0]);
+    }
+
+    function openForm(id = null) {
+        document.getElementById('adminForm').reset();
+        document.getElementById('discContainer').innerHTML = "";
+        document.getElementById('verseBox').innerHTML = "";
+        document.getElementById('editId').value = id || "";
+        if(id) {
+            const s = db.find(x => x.id == id);
+            const f = document.getElementById('adminForm');
+            f.title.value = s.title; f.speaker.value = s.speaker; f.date.value = s.date;
+            f.venue.value = s.venue; f.link.value = s.link; f.songs.value = s.songs;
+            f.declaration.value = s.declaration; f.biblical.value = s.biblical; f.daily.value = s.daily; f.refs.value = s.refs;
+            curImg = s.img;
+            s.discussions.forEach(d => addDiscRow(d.h, d.p));
+            s.verses.forEach(v => addVRow(v.r, v.n));
+        } else {
+            addDiscRow(); addVRow(); curImg = "";
+        }
+        new bootstrap.Modal(document.getElementById('adminModal')).show();
+    }
+
+    document.getElementById('adminForm').onsubmit = (e) => {
+        e.preventDefault();
+        const f = Object.fromEntries(new FormData(e.target).entries());
+        f.img = curImg;
+        f.discussions = Array.from(document.querySelectorAll('.d-row')).map(r => ({ h: r.querySelector('.d-h').value, p: r.querySelector('.d-p').value }));
+        f.verses = Array.from(document.querySelectorAll('.v-row')).map(r => ({ r: r.querySelector('.v-ref').value, n: r.querySelector('.v-text').value }));
+        const eid = document.getElementById('editId').value;
+        if(eid) {
+            const idx = db.findIndex(x => x.id == eid);
+            f.id = parseInt(eid); db[idx] = f;
+        } else {
+            f.id = Date.now(); db.push(f);
+        }
+        localStorage.setItem('kingdom_final_v10', JSON.stringify(db));
+        render();
+        bootstrap.Modal.getInstance(document.getElementById('adminModal')).hide();
+    };
+
+    function render(data = db) {
+        const grid = document.getElementById('videoGrid');
+        grid.innerHTML = data.map(v => `
+            <div class="col text-center position-relative">
+                ${isAuth ? `<div class="position-absolute" style="top:0;right:10px;z-index:10">
+                    <button onclick="openForm(${v.id})" class="btn btn-primary btn-sm rounded-circle" style="width:20px;height:20px;padding:0">✎</button>
+                    <button onclick="del(${v.id})" class="btn btn-danger btn-sm rounded-circle" style="width:20px;height:20px;padding:0">×</button>
+                </div>` : ''}
+                <div class="video-circle" onclick="viewS(${v.id})"><img src="${v.img}"></div>
+                <div class="mt-2 small fw-bold text-uppercase" style="font-size:9px">${v.title}</div>
+            </div>
+        `).join('');
+    }
+
+    function viewS(id) {
+        const v = db.find(x => x.id == id);
+        document.getElementById('modalTitle').innerText = v.title;
+        document.getElementById('modalBanner').style.backgroundImage = `url(${v.img})`;
+        document.getElementById('modalSpeaker').innerText = v.speaker;
+        document.getElementById('modalVenue').innerText = v.venue;
+        document.getElementById('modalDate').innerText = v.date;
+        document.getElementById('modalLink').href = v.link;
+
+        document.getElementById('modalDiscussions').innerHTML = v.discussions.map(d => `
+            <div class="fw-bold mt-2">${d.h}</div>
+            <ul class="small mb-2">${d.p.split('\n').map(p => `<li>${p}</li>`).join('')}</ul>
+        `).join('');
+
+        document.getElementById('modalVerses').innerHTML = v.verses.map(vr => `<div class="mb-1 small"><b>${vr.r}</b>: ${vr.n}</div>`).join('');
+        const list = (str, id) => document.getElementById(id).innerHTML = str.split('\n').filter(i => i.trim()).map(i => `<li>${i}</li>`).join('');
+        list(v.declaration, 'modalDecList');
+        list(v.refs, 'modalRefs');
+        document.getElementById('modalSongs').innerHTML = v.songs.split(',').map(s => `<li>${s.trim()}</li>`).join('');
+        
+        document.getElementById('modalIllustrations').innerHTML = 
+            `<b>Biblical:</b><br>${v.biblical.split('\n').map(i => `• ${i}`).join('<br>')}<br><br>` + 
+            `<b>Modern:</b><br>${v.daily.split('\n').map(i => `• ${i}`).join('<br>')}`;
+
+        new bootstrap.Modal(document.getElementById('detailsModal')).show();
+    }
+
+    function applyFilter() {
+        const k = document.getElementById('smartSearch').value.toLowerCase();
+        render(db.filter(s => s.title.toLowerCase().includes(k) || s.speaker.toLowerCase().includes(k)));
+    }
+    function del(id) { if(confirm("Delete permanently?")) { db = db.filter(x => x.id != id); localStorage.setItem('kingdom_final_v10', JSON.stringify(db)); render(); } }
+    function exportPDF() { html2pdf().from(document.getElementById('pdfArea')).set({margin:0, filename: 'Archive_Entry.pdf'}).save(); }
+
+    render();
+</script>
+</body>
+</html>
