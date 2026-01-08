@@ -20,13 +20,22 @@
         .close-orb { position: absolute; top: -20px; right: -20px; width: 40px; height: 40px; background: var(--gold); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; border: 3px solid #fff; z-index: 2000; }
         .omni-search { max-width: 500px; margin: 40px auto; background: rgba(255,255,255,0.05); border: 1px solid var(--gold); border-radius: 50px; color: #fff; padding: 12px 25px; text-align: center; }
         .video-circle { width: 140px; height: 140px; border-radius: 50%; overflow: hidden; cursor: pointer; border: 3px solid transparent; transition: 0.4s; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .video-circle:hover { border-color: var(--gold); transform: scale(1.05); }
         .video-circle img { width: 100%; height: 100%; object-fit: cover; }
         .modal-content { background: #fff; color: #222; border-radius: 0; border: none; }
         #pdfArea { padding: 40px; position: relative; border: 12px solid var(--dark); background: white; }
         .label-gold { font-size: 0.65rem; font-weight: 800; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; border-bottom: 1px solid #eee; margin: 15px 0 8px; display: block; }
-        #qrCanvas img { margin: 10px auto; display: block; background: #fff; padding: 5px; }
-        @media print { .d-print-none { display: none !important; } body { background: white !important; } #pdfArea { border: 2px solid #000 !important; width: 100% !important; margin: 0 !important; } }
+        
+        /* Stylish Discussion & Prayer Formatting */
+        .discussion-block { border-left: 3px solid var(--gold); padding-left: 20px; margin-bottom: 25px; position: relative; }
+        .discussion-block::before { content: ''; position: absolute; left: -8px; top: 0; width: 13px; height: 13px; background: var(--gold); border-radius: 50%; }
+        .disc-h1 { font-family: 'Cinzel', serif; font-size: 1.3rem; color: var(--dark); text-transform: uppercase; margin-bottom: 5px; }
+        .disc-h2 { font-size: 0.85rem; font-weight: 700; color: var(--gold); text-transform: uppercase; margin-bottom: 8px; }
+        .styled-list { list-style: none; padding-left: 0; font-size: 0.95rem; color: #444; }
+        .styled-list li { position: relative; padding-left: 18px; margin-bottom: 6px; }
+        .styled-list li::before { content: "→"; position: absolute; left: 0; color: var(--gold); font-weight: bold; }
+        
+        .ref-italic { font-style: italic; color: #555; }
+        @media print { .d-print-none { display: none !important; } }
     </style>
 </head>
 <body>
@@ -56,18 +65,34 @@
                 </div>
                 <div class="modal-body row">
                     <div class="col-md-7 border-end pe-4">
-                        <span class="label-gold">Spiritual Discourse</span><div id="modalDiscussions"></div>
-                        <span class="label-gold">Scriptures</span><div id="modalVerses"></div>
-                        <span class="label-gold">Declarations</span><ul id="modalDecList" class="small fw-bold"></ul>
+                        <span class="label-gold">Spiritual Discourse</span>
+                        <div id="modalDiscussions"></div>
+                        
+                        <span class="label-gold">Scripture Reference List</span>
+                        <div id="modalVerses"></div>
+                        
+                        <span class="label-gold">Prophetic Prayer Points</span>
+                        <ul id="modalPrayers" class="styled-list small fw-bold"></ul>
                     </div>
                     <div class="col-md-5 ps-4">
-                        <span class="label-gold">Metadata</span>
-                        <p class="small"><b>Speaker:</b> <span id="modalSpeaker"></span><br><b>Date:</b> <span id="modalDate"></span></p>
-                        <span class="label-gold">Songs</span><ul id="modalSongs" class="small"></ul>
-                        <span class="label-gold">Illustrations</span><ul id="modalIllus" class="small"></ul>
+                        <span class="label-gold">Sermon Metadata</span>
+                        <p class="small"><b>Speaker:</b> <span id="modalSpeaker"></span><br><b>Date:</b> <span id="modalDate"></span><br><b>Venue:</b> <span id="modalVenue"></span></p>
+                        
+                        <span class="label-gold">Worship Songs</span>
+                        <ul id="modalSongs" class="small styled-list"></ul>
+                        
+                        <span class="label-gold">Declarations</span>
+                        <ul id="modalDecList" class="small styled-list"></ul>
+
+                        <span class="label-gold">Biblical Illustration</span>
+                        <ul id="modalBiblical" class="small styled-list"></ul>
+
+                        <span class="label-gold">Daily Illustration</span>
+                        <ul id="modalDaily" class="small styled-list"></ul>
+
                         <div id="qrCanvas"></div>
                         <div class="mt-4 d-print-none">
-                            <button onclick="window.print()" class="btn btn-dark w-100 mb-2 rounded-0">PRINT NOTE</button>
+                            <button id="pdfBtn" onclick="exportPDF()" class="btn btn-dark w-100 mb-2 rounded-0">DOWNLOAD PDF NOTE</button>
                             <a href="#" id="modalLink" target="_blank" class="btn btn-outline-danger w-100 rounded-0">WATCH VIDEO</a>
                         </div>
                     </div>
@@ -85,17 +110,25 @@
                 <input type="hidden" id="editId">
                 <h4 class="fw-bold mb-3">CLOUD EDITOR</h4>
                 <div class="row g-2">
-                    <div class="col-md-8"><input type="text" name="title" class="form-control" placeholder="Theme" required></div>
+                    <div class="col-md-6"><input type="text" name="title" class="form-control" placeholder="Theme" required></div>
+                    <div class="col-md-6"><input type="text" name="venue" class="form-control" placeholder="Venue"></div>
                     <div class="col-md-4"><input type="text" name="speaker" class="form-control" placeholder="Speaker" required></div>
                     <div class="col-md-4"><input type="date" name="date" class="form-control"></div>
-                    <div class="col-md-8"><input type="url" name="link" class="form-control" placeholder="YouTube Link"></div>
+                    <div class="col-md-4"><input type="url" name="link" class="form-control" placeholder="YouTube Link"></div>
                     <div class="col-12"><input type="file" id="fileIn" class="form-control" accept="image/*"></div>
-                    <div class="col-12 border p-2 bg-light"><div id="discContainer"></div><button type="button" class="btn btn-xs btn-dark mt-1" onclick="addDiscRow()">+ Add Block</button></div>
-                    <div class="col-12 border p-2"><div id="verseBox"></div><button type="button" class="btn btn-xs btn-link" onclick="addVRow()">+ Add Verse</button></div>
-                    <div class="col-md-6"><textarea name="songs" class="form-control" placeholder="Songs (comma separated)"></textarea></div>
+                    <div class="col-12 border p-2 bg-light">
+                        <div id="discContainer"></div>
+                        <button type="button" class="btn btn-xs btn-dark mt-1" onclick="addDiscRow()">+ Add Topic Block</button>
+                    </div>
+                    <div class="col-12 border p-2">
+                        <div id="verseBox"></div>
+                        <button type="button" class="btn btn-xs btn-link" onclick="addVRow()">+ Add Verse</button>
+                    </div>
+                    <div class="col-md-6"><textarea name="prayers" class="form-control" placeholder="Prayer Points (comma separated)"></textarea></div>
                     <div class="col-md-6"><textarea name="declaration" class="form-control" placeholder="Declarations (comma separated)"></textarea></div>
+                    <div class="col-md-6"><textarea name="songs" class="form-control" placeholder="Songs (comma separated)"></textarea></div>
                     <div class="col-md-6"><textarea name="biblical" class="form-control" placeholder="Bible Illustration (comma separated)"></textarea></div>
-                    <div class="col-md-6"><textarea name="daily" class="form-control" placeholder="Life Illustration (comma separeted)"></textarea></div>
+                    <div class="col-12"><textarea name="daily" class="form-control" placeholder="Daily Illustration (comma separated)"></textarea></div>
                 </div>
                 <button type="submit" class="btn btn-dark w-100 mt-3 py-2 fw-bold">SAVE TO CLOUD</button>
             </form>
@@ -107,122 +140,91 @@
 <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <script>
-    // 1. GLOBAL STATE
     let db = [], curImg = "", isAuth = false, database, sermonRef;
 
-    // 2. CONFIG - REPLACE WITH YOUR ACTUAL KEYS
-    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyAEMEzQdew1dGavtEEf18HMCEVZ97dCyjE",
-  authDomain: "https://kingdom-15c66-default-rtdb.firebaseio.com",
-  projectId: "kingdom-15c66",
-  storageBucket: "kingdom-15c66.firebasestorage.app",
-  messagingSenderId: "156458433798",
-  appId: "1:156458433798:web:044dff42c2bf33f0a2b287",
-  measurementId: "G-MHG6E2YDTY"
-};
+    const firebaseConfig = {
+        apiKey: "AIzaSyAEMEzQdew1dGavtEEf18HMCEVZ97dCyjE",
+        authDomain: "kingdom-15c66.firebaseapp.com",
+        databaseURL: "https://kingdom-15c66-default-rtdb.firebaseio.com",
+        projectId: "kingdom-15c66",
+        storageBucket: "kingdom-15c66.appspot.com",
+        messagingSenderId: "156458433798",
+        appId: "1:156458433798:web:044dff42c2bf33f0a2b287"
+    };
 
-    // 3. SECURE INITIALIZATION
     document.addEventListener('DOMContentLoaded', function() {
-        try {
-            firebase.initializeApp(firebaseConfig);
-            database = firebase.database();
-            sermonRef = database.ref('sermons');
+        firebase.initializeApp(firebaseConfig);
+        database = firebase.database();
+        sermonRef = database.ref('sermons');
 
-            // Robust Image Handler (Prevents Blob error)
-            const fileIn = document.getElementById('fileIn');
-            if(fileIn) {
-                fileIn.onchange = (e) => {
-                    if (e.target.files && e.target.files[0]) {
-                        const r = new FileReader();
-                        r.onload = () => { curImg = r.result; console.log("Image Ready."); };
-                        r.readAsDataURL(e.target.files[0]);
-                    }
-                };
-            }
-
-            // Database Sync
-            sermonRef.on('value', (snap) => {
-                const data = snap.val();
-                db = data ? Object.values(data) : [];
-                render();
-            });
-
-            // Form Submit Logic
-            document.getElementById('adminForm').onsubmit = function(e) {
-                e.preventDefault();
-                console.log("Saving...");
-                
-                const fd = Object.fromEntries(new FormData(this).entries());
-                
-                // If no new image is chosen, use the existing one or a default
-                fd.img = curImg || fd.img || "https://images.unsplash.com/photo-1507692049790-de58290a4334?w=500";
-                
-                fd.discussions = Array.from(document.querySelectorAll('.d-row')).map(r => ({
-                    h: r.querySelector('.d-h').value,
-                    p: r.querySelector('.d-p').value
-                }));
-                fd.verses = Array.from(document.querySelectorAll('.v-row')).map(r => ({
-                    r: r.querySelector('.v-ref').value,
-                    n: r.querySelector('.v-text').value
-                }));
-
-                const eid = document.getElementById('editId').value || "sermon_" + Date.now();
-                fd.id = eid;
-
-                database.ref('sermons/' + eid).set(fd)
-                    .then(() => {
-                        console.log("Success!");
-                        bootstrap.Modal.getInstance(document.getElementById('adminModal')).hide();
-                        curImg = ""; // Reset for next add
-                    })
-                    .catch(err => alert("Cloud Error: " + err.message));
+        const fileIn = document.getElementById('fileIn');
+        if(fileIn) {
+            fileIn.onchange = (e) => {
+                if (e.target.files[0]) {
+                    const r = new FileReader();
+                    r.onload = () => { curImg = r.result; };
+                    r.readAsDataURL(e.target.files[0]);
+                }
             };
+        }
 
-            console.log("Archive Online & Connected.");
-        } catch (e) { console.error("Cloud Error:", e); }
+        sermonRef.on('value', (snap) => {
+            const data = snap.val();
+            db = data ? Object.values(data) : [];
+            render();
+        });
+
+        document.getElementById('adminForm').onsubmit = function(e) {
+            e.preventDefault();
+            const fd = Object.fromEntries(new FormData(this).entries());
+            fd.img = curImg || fd.img || "https://images.unsplash.com/photo-1507692049790-de58290a4334?w=500";
+            fd.discussions = Array.from(document.querySelectorAll('.d-row')).map(r => ({
+                h: r.querySelector('.d-h').value,
+                p: r.querySelector('.d-p').value
+            }));
+            fd.verses = Array.from(document.querySelectorAll('.v-row')).map(r => ({
+                r: r.querySelector('.v-ref').value,
+                n: r.querySelector('.v-text').value
+            }));
+            const eid = document.getElementById('editId').value || "sermon_" + Date.now();
+            fd.id = eid;
+            database.ref('sermons/' + eid).set(fd).then(() => {
+                bootstrap.Modal.getInstance(document.getElementById('adminModal')).hide();
+                curImg = ""; 
+            });
+        };
     });
 
-    // 4. BIBLE API
-    async function fetchV(input) {
-        if(!input.value) return;
-        const textArea = input.nextElementSibling;
-        textArea.placeholder = "Searching Heavens...";
-        try {
-            const res = await fetch(`https://bible-api.com/${encodeURIComponent(input.value)}`);
-            const data = await res.json();
-            textArea.value = data.text ? data.text.trim() : "Not found.";
-        } catch(e) { textArea.value = "Connect error."; }
-    }
-
-    // 5. FUNCTIONS
-    function adminLogin() {
-        if(prompt("Key:") === "kenox1234") {
-            isAuth = true;
-            document.getElementById('adminControls').style.display = "block";
-            render();
-        }
-    }
-
+    function adminLogin() { if(prompt("Key:") === "kenox1234") { isAuth = true; document.getElementById('adminControls').style.display = "block"; render(); } }
+    
     function addDiscRow(h="", p="") {
         const div = document.createElement('div'); div.className = "row g-1 mb-1 d-row";
-        div.innerHTML = `<div class="col-4"><input type="text" value="${h}" class="form-control d-h" placeholder="Header"></div>
-                         <div class="col-8"><input type="text" value="${p}" class="form-control d-p" placeholder="Details"></div>`;
+        div.innerHTML = `<div class="col-4"><input type="text" value="${h}" class="form-control d-h" placeholder="Topic"></div>
+                         <div class="col-8"><input type="text" value="${p}" class="form-control d-p" placeholder="Details (split by comma)"></div>`;
         document.getElementById('discContainer').appendChild(div);
     }
 
     function addVRow(r="", n="") {
         const div = document.createElement('div'); div.className = "input-group mb-1 v-row";
-        div.innerHTML = `<input type="text" value="${r}" class="form-control v-ref" placeholder="John 3:16" onblur="fetchV(this)">
+        div.innerHTML = `<input type="text" value="${r}" class="form-control v-ref" placeholder="Ref" onblur="fetchV(this)">
                          <textarea class="form-control v-text" rows="1">${n}</textarea>`;
         document.getElementById('verseBox').appendChild(div);
     }
 
+    async function fetchV(i) {
+        if(!i.value) return;
+        const t = i.nextElementSibling; t.placeholder = "Loading...";
+        try {
+            const r = await fetch(`https://bible-api.com/${encodeURIComponent(i.value)}`);
+            const d = await r.json(); t.value = d.text || "Not found";
+        } catch(e) { t.value = "Error"; }
+    }
+
     function render(data = db) {
         const grid = document.getElementById('videoGrid');
-        if(!grid) return;
         grid.innerHTML = data.map(v => `
             <div class="col text-center position-relative mb-4">
                 ${isAuth ? `<div class="position-absolute" style="top:0;right:10px;z-index:100">
@@ -231,8 +233,7 @@ const firebaseConfig = {
                 </div>` : ''}
                 <div class="video-circle" onclick="viewS('${v.id}')"><img src="${v.img}"></div>
                 <div class="mt-2 small fw-bold text-uppercase" style="font-size:9px; color:var(--gold)">${v.title}</div>
-            </div>
-        `).join('');
+            </div>`).join('');
     }
 
     function viewS(id) {
@@ -242,18 +243,55 @@ const firebaseConfig = {
         document.getElementById('modalBanner').style.backgroundImage = `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${v.img})`;
         document.getElementById('modalSpeaker').innerText = v.speaker;
         document.getElementById('modalDate').innerText = v.date;
+        document.getElementById('modalVenue').innerText = v.venue || "Global Sanctuary";
         document.getElementById('modalLink').href = v.link;
-        document.getElementById('modalDiscussions').innerHTML = v.discussions ? v.discussions.map(d => `<div class="fw-bold mt-2 text-dark">${d.h}</div><div class="small">${d.p}</div>`).join('') : "";
-        document.getElementById('modalVerses').innerHTML = v.verses ? v.verses.map(vr => `<div class="small mb-1"><b>${vr.r}</b>: ${vr.n}</div>`).join('') : "";
-        const list = (str, id) => document.getElementById(id).innerHTML = str ? str.split(',').filter(i => i.trim()).map(i => `<li>${i}</li>`).join('') : "";
-        list(v.declaration, 'modalDecList');
-        list(v.songs, 'modalSongs');
-        list(v.biblical, 'modalIllus');
-        list(v.daily, 'modalIllus') ;
-        document.getElementById('modalIllus').innerHTML = `<div class="small"><b>Bible:</b> ${v.biblical || ""}<br><b>Life:</b> ${v.daily || ""}</div>`;
+
+        document.getElementById('modalDiscussions').innerHTML = v.discussions ? v.discussions.map(d => `
+            <div class="discussion-block">
+                <h1 class="disc-h1">${d.h}</h1>
+                <h2 class="disc-h2">Theological Insights</h2>
+                <ul class="styled-list">
+                    ${d.p.split(',').filter(p => p.trim()).map(p => `<li>${p.trim()}</li>`).join('')}
+                </ul>
+            </div>`).join('') : "";
+
+        document.getElementById('modalVerses').innerHTML = v.verses ? v.verses.map(vr => `
+            <div class="mb-2"><b>${vr.r}</b>: <i class="ref-italic">${vr.n}</i></div>`).join('') : "";
+
+        const listify = (str, target) => {
+            document.getElementById(target).innerHTML = str ? str.split(',').filter(i => i.trim()).map(i => `<li>${i.trim()}</li>`).join('') : "<li>None</li>";
+        };
+
+        listify(v.prayers, 'modalPrayers');
+        listify(v.declaration, 'modalDecList');
+        listify(v.songs, 'modalSongs');
+        listify(v.biblical, 'modalBiblical');
+        listify(v.daily, 'modalDaily');
+
         document.getElementById('qrCanvas').innerHTML = "";
         if(v.link) new QRCode(document.getElementById("qrCanvas"), { text: v.link, width: 80, height: 80 });
         new bootstrap.Modal(document.getElementById('detailsModal')).show();
+    }
+
+    // EXPORT PDF FUNCTION
+    function exportPDF() {
+        const element = document.getElementById('pdfArea');
+        const theme = document.getElementById('modalTitle').innerText;
+        const opt = {
+            margin: 0,
+            filename: `Sermon_Notes_${theme}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+
+        // Hide buttons during export
+        document.querySelectorAll('.d-print-none').forEach(b => b.style.display = 'none');
+        
+        html2pdf().set(opt).from(element).save().then(() => {
+            // Restore buttons
+            document.querySelectorAll('.d-print-none').forEach(b => b.style.display = 'block');
+        });
     }
 
     function openForm(id = null) {
@@ -261,16 +299,13 @@ const firebaseConfig = {
         document.getElementById('discContainer').innerHTML = "";
         document.getElementById('verseBox').innerHTML = "";
         document.getElementById('editId').value = id || "";
-        curImg = "";
         if(id) {
             const s = db.find(x => x.id == id);
-            if(s) {
-                f.title.value = s.title; f.speaker.value = s.speaker; f.date.value = s.date;
-                f.link.value = s.link; f.songs.value = s.songs; f.declaration.value = s.declaration;
-                f.biblical.value = s.biblical; f.daily.value = s.daily; curImg = s.img;
-                if(s.discussions) s.discussions.forEach(d => addDiscRow(d.h, d.p));
-                if(s.verses) s.verses.forEach(v => addVRow(v.r, v.n));
-            }
+            f.title.value = s.title; f.venue.value = s.venue || ""; f.speaker.value = s.speaker; f.date.value = s.date;
+            f.link.value = s.link; f.songs.value = s.songs; f.declaration.value = s.declaration; f.prayers.value = s.prayers || "";
+            f.biblical.value = s.biblical; f.daily.value = s.daily; curImg = s.img;
+            if(s.discussions) s.discussions.forEach(d => addDiscRow(d.h, d.p));
+            if(s.verses) s.verses.forEach(v => addVRow(v.r, v.n));
         } else { addDiscRow(); addVRow(); }
         new bootstrap.Modal(document.getElementById('adminModal')).show();
     }
@@ -278,7 +313,7 @@ const firebaseConfig = {
     function del(id) { if(confirm("Delete Permanently?")) database.ref('sermons/' + id).remove(); }
     function applyFilter() {
         const k = document.getElementById('smartSearch').value.toLowerCase();
-        render(db.filter(s => s.title.toLowerCase().includes(k) || s.speaker.toLowerCase().includes(k)));
+        render(db.filter(s => s.title.toLowerCase().includes(k)));
     }
 </script>
 </body>
