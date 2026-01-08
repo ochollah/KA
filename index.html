@@ -248,7 +248,8 @@ const firebaseConfig = {
         const list = (str, id) => document.getElementById(id).innerHTML = str ? str.split(',').filter(i => i.trim()).map(i => `<li>${i}</li>`).join('') : "";
         list(v.declaration, 'modalDecList');
         list(v.songs, 'modalSongs');
-        list(v.songs, 'modalSongs');
+        list(v.biblical, 'modalIllus');
+        list(v.daily, 'modalIllus') ;
         document.getElementById('modalIllus').innerHTML = `<div class="small"><b>Bible:</b> ${v.biblical || ""}<br><b>Life:</b> ${v.daily || ""}</div>`;
         document.getElementById('qrCanvas').innerHTML = "";
         if(v.link) new QRCode(document.getElementById("qrCanvas"), { text: v.link, width: 80, height: 80 });
