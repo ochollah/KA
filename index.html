@@ -13,42 +13,34 @@
             background-attachment: fixed; background-size: cover; font-family: 'Montserrat', sans-serif; color: #fff; min-height: 100vh;
         }
         .glass-nav { backdrop-filter: blur(15px); background: rgba(0,0,0,0.85); border-bottom: 1px solid rgba(197, 160, 89, 0.3); padding: 1rem 2rem; position: sticky; top: 0; z-index: 1000; }
-        .archive-logo { font-family: 'Cinzel', serif; letter-spacing: 4px; font-size: 1.5rem; color: var(--gold); text-decoration: none; }
+        .archive-logo { font-family: 'Cinzel', serif; letter-spacing: 4px; font-size: 1.5rem; color: var(--gold); text-decoration: none; cursor: pointer; }
         .admin-fab { position: fixed; bottom: 30px; right: 30px; background: var(--gold); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 999; }
         .close-orb { position: absolute; top: -20px; right: -20px; width: 40px; height: 40px; background: var(--gold); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; border: 3px solid #fff; z-index: 2000; }
+        
         .omni-search { max-width: 500px; margin: 40px auto; background: rgba(255,255,255,0.05); border: 1px solid var(--gold); border-radius: 50px; color: #fff; padding: 12px 25px; text-align: center; }
         .video-circle { width: 140px; height: 140px; border-radius: 50%; overflow: hidden; cursor: pointer; border: 3px solid transparent; transition: 0.4s; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .video-circle img { width: 100%; height: 100%; object-fit: cover; }
         
-        /* PDF/Modal Styles */
+        /* PDF Logic */
         .modal-content { background: #fff; color: #222; border-radius: 0; border: none; }
-        #pdfArea { padding: 40px; background: white; border: 12px solid var(--dark); position: relative; }
-        .label-gold { font-size: 0.7rem; font-weight: 800; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; border-bottom: 1px solid #eee; margin: 20px 0 10px; display: block; }
-        
+        #pdfArea { padding: 40px; background: white !important; border: 12px solid var(--dark); position: relative; color: #000 !important; }
+        .label-gold { font-size: 0.7rem; font-weight: 800; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; border-bottom: 1px solid #eee; margin: 18px 0 8px; display: block; }
+        .info-text { color: #000 !important; font-size: 0.85rem; line-height: 1.6; }
+        .info-text b { color: var(--gold); text-transform: uppercase; font-size: 0.75rem; }
+
         .discussion-block { border-left: 3px solid var(--gold); padding-left: 20px; margin-bottom: 25px; position: relative; }
         .discussion-block::before { content: ''; position: absolute; left: -8px; top: 0; width: 13px; height: 13px; background: var(--gold); border-radius: 50%; }
         .disc-h1 { font-family: 'Cinzel', serif; font-size: 1.3rem; color: #111; text-transform: uppercase; }
         
         .styled-list { list-style: none; padding-left: 0; font-size: 0.95rem; color: #222 !important; }
-        .styled-list li { position: relative; padding-left: 20px; margin-bottom: 8px; }
+        .styled-list li { position: relative; padding-left: 20px; margin-bottom: 8px; line-height: 1.4; }
         .styled-list li::before { content: "→"; position: absolute; left: 0; color: var(--gold); font-weight: bold; }
         
         .verse-item { display: block; margin-bottom: 15px; color: #000 !important; }
-        .ref-tag { font-weight: 800; color: #000 !important; display: block; }
-        .ref-italic { font-style: italic; color: #444 !important; display: block; font-size: 0.9rem; border-left: 2px solid #eee; padding-left: 10px; margin-top: 5px; }
+        .ref-tag { font-weight: 800; color: #000 !important; }
+        .ref-italic { font-style: italic; color: #333 !important; display: block; font-size: 0.9rem; border-left: 2px solid #eee; padding-left: 10px; margin-top: 5px; }
 
-        /* PDF Link Button Styling */
-        .pdf-video-link { 
-            display: inline-block; 
-            background: #ff0000; 
-            color: white !important; 
-            padding: 10px 20px; 
-            text-decoration: none !important; 
-            font-weight: bold; 
-            font-size: 0.8rem; 
-            border-radius: 4px;
-            margin-top: 10px;
-        }
+        .pdf-video-link { display: inline-block; background: #c4302b; color: white !important; padding: 10px 18px; text-decoration: none !important; font-weight: bold; font-size: 0.75rem; border-radius: 4px; margin-top: 10px; }
 
         @media print { .d-print-none { display: none !important; } }
     </style>
@@ -59,11 +51,12 @@
     <a href="#" class="archive-logo" onclick="location.reload()">KINGDOM COME</a>
     <div id="adminControls" style="display:none;">
         <button class="btn btn-sm btn-light fw-bold" onclick="openForm()">+ ADD SERMON</button>
+        <button class="btn btn-sm btn-outline-danger ms-2" onclick="logout()">LOGOUT</button>
     </div>
 </header>
 
 <div class="container text-center">
-    <input type="text" id="smartSearch" class="form-control omni-search" oninput="applyFilter()" placeholder="Search theme or speaker...">
+    <input type="text" id="smartSearch" class="form-control omni-search" oninput="applyFilter()" placeholder="Search archive...">
     <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-5 pb-5" id="videoGrid"></div>
 </div>
 
@@ -74,40 +67,38 @@
         <div class="modal-content">
             <div class="close-orb" data-bs-dismiss="modal">&times;</div>
             <div id="pdfArea">
-                <div id="modalBanner" style="height:180px; background-size:cover; background-position:center; margin:-40px -40px 25px -40px; border-bottom:5px solid var(--gold); display:flex; align-items:center; justify-content:center; color:#fff; text-shadow:0 3px 10px #000;">
-                    <a id="modalTitleLink" href="#" target="_blank" style="color:white; text-decoration:none;">
-                        <h2 id="modalTitle" class="text-center font-family-cinzel"></h2>
-                    </a>
+                <div id="modalBanner" style="height:160px; background-size:cover; background-position:center; margin:-40px -40px 25px -40px; border-bottom:5px solid var(--gold); display:flex; align-items:center; justify-content:center; color:#fff; text-shadow:0 3px 10px #000;">
+                    <h2 id="modalTitle" class="text-center font-family-cinzel px-3"></h2>
                 </div>
                 <div class="modal-body row">
                     <div class="col-md-7 border-end pe-4">
-                        <span class="label-gold">Spiritual Discourse</span>
+                        <span class="label-gold">Sermon Notes</span>
                         <div id="modalDiscussions"></div>
-                        
-                        <span class="label-gold">Scripture Reference List</span>
+                        <span class="label-gold">Scripture Verses</span>
                         <div id="modalVerses"></div> 
-                        
-                        <span class="label-gold">Prophetic Prayer Points</span>
-                        <ul id="modalPrayers" class="styled-list small fw-bold"></ul>
+                        <span class="label-gold">Biblical Illustrations</span>
+                        <ul id="modalBiblical" class="styled-list"></ul>
+                        <span class="label-gold">Prayer Points</span>
+                        <ul id="modalPrayers" class="styled-list fw-bold"></ul>
                     </div>
                     <div class="col-md-5 ps-4">
-                        <span class="label-gold">Metadata</span>
-                        <p class="small"><b>Speaker:</b> <span id="modalSpeaker"></span><br><b>Date:</b> <span id="modalDate"></span><br><b>Venue:</b> <span id="modalVenue"></span></p>
-                        
-                        <span class="label-gold">Resources</span>
-                        <ul id="modalSongs" class="small styled-list"></ul>
-                        <ul id="modalDecList" class="small styled-list"></ul>
-
-                        <span class="label-gold">Illustrations</span>
-                        <ul id="modalBiblical" class="small styled-list"></ul>
-                        <ul id="modalDaily" class="small styled-list"></ul>
-
+                        <span class="label-gold">Sermon Info</span>
+                        <div class="info-text">
+                            <b>Preacher:</b> <span id="modalSpeaker"></span><br>
+                            <b>Date:</b> <span id="modalDate"></span><br>
+                            <b>Venue:</b> <span id="modalVenue"></span>
+                        </div>
+                        <span class="label-gold">Worship Songs</span>
+                        <ul id="modalSongs" class="styled-list small"></ul>
+                        <span class="label-gold">Daily Illustration</span>
+                        <ul id="modalDaily" class="styled-list small"></ul>
+                        <span class="label-gold">Declarations</span>
+                        <ul id="modalDecList" class="styled-list small"></ul>
                         <span class="label-gold">Watch Sermon</span>
-                        <div id="qrCanvas"></div>
+                        <div id="qrCanvas" class="mb-2"></div>
                         <a id="pdfVideoBtn" href="#" target="_blank" class="pdf-video-link">▶ WATCH ON YOUTUBE</a>
-
-                        <div class="mt-4 d-print-none">
-                            <button id="pdfBtn" onclick="exportPDF()" class="btn btn-dark w-100 mb-2 rounded-0">DOWNLOAD PDF NOTE</button>
+                        <div class="mt-4 d-print-none text-center">
+                            <button id="pdfBtn" onclick="exportPDF()" class="btn btn-dark w-100 rounded-0">DOWNLOAD PDF</button>
                         </div>
                     </div>
                 </div>
@@ -121,29 +112,23 @@
         <div class="modal-content p-4">
             <form id="adminForm">
                 <input type="hidden" id="editId">
-                <h4 class="fw-bold mb-3">CLOUD EDITOR</h4>
+                <h4 class="fw-bold mb-3">SERMON EDITOR</h4>
                 <div class="row g-2">
                     <div class="col-md-6"><input type="text" name="title" class="form-control" placeholder="Theme" required></div>
                     <div class="col-md-6"><input type="text" name="venue" class="form-control" placeholder="Venue"></div>
                     <div class="col-md-4"><input type="text" name="speaker" class="form-control" placeholder="Speaker" required></div>
                     <div class="col-md-4"><input type="date" name="date" class="form-control"></div>
-                    <div class="col-md-4"><input type="url" name="link" class="form-control" placeholder="YouTube URL"></div>
-                    <div class="col-12"><input type="file" id="fileIn" class="form-control" accept="image/*"></div>
-                    <div class="col-12 border p-2 bg-light">
-                        <div id="discContainer"></div>
-                        <button type="button" class="btn btn-xs btn-dark" onclick="addDiscRow()">+ Add Topic Block</button>
-                    </div>
-                    <div class="col-12 border p-2">
-                        <div id="verseBox"></div>
-                        <button type="button" class="btn btn-xs btn-link" onclick="addVRow()">+ Add Verse</button>
-                    </div>
-                    <div class="col-md-6"><textarea name="prayers" class="form-control" placeholder="Prayers (comma separated)"></textarea></div>
-                    <div class="col-md-6"><textarea name="declaration" class="form-control" placeholder="Declarations (comma separated)"></textarea></div>
-                    <div class="col-md-6"><textarea name="songs" class="form-control" placeholder="Songs (comma separated)"></textarea></div>
-                    <div class="col-md-6"><textarea name="biblical" class="form-control" placeholder="Bible Illustr (comma separated)"></textarea></div>
-                    <div class="col-12"><textarea name="daily" class="form-control" placeholder="Life Illustr (comma separated)"></textarea></div>
+                    <div class="col-md-4"><input type="url" name="link" class="form-control" placeholder="YouTube Link"></div>
+                    <div class="col-12"><input type="file" id="fileIn" class="form-control"></div>
+                    <div class="col-12 border p-2 bg-light"><div id="discContainer"></div><button type="button" class="btn btn-sm btn-dark" onclick="addDiscRow()">+ Add Topic</button></div>
+                    <div class="col-12 border p-2"><div id="verseBox"></div><button type="button" class="btn btn-sm btn-link" onclick="addVRow()">+ Add Verse</button></div>
+                    <div class="col-md-6"><textarea name="songs" class="form-control" placeholder="Songs (comma split)"></textarea></div>
+                    <div class="col-md-6"><textarea name="prayers" class="form-control" placeholder="Prayers (comma split)"></textarea></div>
+                    <div class="col-md-6"><textarea name="biblical" class="form-control" placeholder="Biblical Illustrations"></textarea></div>
+                    <div class="col-md-6"><textarea name="daily" class="form-control" placeholder="Life Illustrations"></textarea></div>
+                    <div class="col-12"><textarea name="declaration" class="form-control" placeholder="Declarations"></textarea></div>
                 </div>
-                <button type="submit" class="btn btn-dark w-100 mt-3 py-2 fw-bold">SAVE TO CLOUD</button>
+                <button type="submit" class="btn btn-dark w-100 mt-3 py-2 fw-bold">SAVE TO ARCHIVE</button>
             </form>
         </div>
     </div>
@@ -157,7 +142,6 @@
 
 <script>
     let db = [], curImg = "", isAuth = false, database, sermonRef;
-
     const firebaseConfig = {
         apiKey: "AIzaSyAEMEzQdew1dGavtEEf18HMCEVZ97dCyjE",
         authDomain: "kingdom-15c66.firebaseapp.com",
@@ -171,16 +155,18 @@
     firebase.initializeApp(firebaseConfig);
     database = firebase.database();
     sermonRef = database.ref('sermons');
-
     sermonRef.on('value', snap => { db = snap.val() ? Object.values(snap.val()) : []; render(); });
 
-    function adminLogin() { if(prompt("Key:") === "kenox1234") { isAuth = true; document.getElementById('adminControls').style.display = "block"; render(); } }
+    function adminLogin() { if(prompt("Key:") === "kenox1234") { isAuth = true; document.getElementById('adminControls').style.display = "flex"; render(); } }
+    function logout() { isAuth = false; document.getElementById('adminControls').style.display = "none"; render(); }
+    function deleteSermon(id) { if(confirm("Delete this sermon permanently?")) database.ref('sermons/' + id).remove(); }
 
     function render(data = db) {
         document.getElementById('videoGrid').innerHTML = data.map(v => `
             <div class="col text-center position-relative mb-4">
-                ${isAuth ? `<div class="position-absolute" style="top:0;right:10px;z-index:100">
-                    <button onclick="openForm('${v.id}')" class="btn btn-light btn-sm rounded-circle shadow">✎</button>
+                ${isAuth ? `<div class="position-absolute" style="top:0;right:10px;z-index:10; display:flex; gap:5px;">
+                    <button onclick="openForm('${v.id}')" class="btn btn-light btn-sm rounded-circle shadow-sm">✎</button>
+                    <button onclick="deleteSermon('${v.id}')" class="btn btn-danger btn-sm rounded-circle shadow-sm">🗑</button>
                 </div>` : ''}
                 <div class="video-circle" onclick="viewS('${v.id}')"><img src="${v.img}"></div>
                 <div class="mt-2 small fw-bold text-uppercase" style="font-size:9px; color:var(--gold)">${v.title}</div>
@@ -191,96 +177,54 @@
         const v = db.find(x => x.id == id);
         if(!v) return;
         document.getElementById('modalTitle').innerText = v.title;
-        document.getElementById('modalTitleLink').href = v.link || "#";
-        document.getElementById('pdfVideoBtn').href = v.link || "#";
-        document.getElementById('modalBanner').style.backgroundImage = `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${v.img})`;
         document.getElementById('modalSpeaker').innerText = v.speaker;
         document.getElementById('modalDate').innerText = v.date;
         document.getElementById('modalVenue').innerText = v.venue || "Global Sanctuary";
-
-        document.getElementById('modalDiscussions').innerHTML = v.discussions ? v.discussions.map(d => `
-            <div class="discussion-block">
-                <h1 class="disc-h1">${d.h}</h1>
-                <ul class="styled-list">${d.p.split(',').filter(p => p.trim()).map(p => `<li>${p.trim()}</li>`).join('')}</ul>
-            </div>`).join('') : "";
-
-        document.getElementById('modalVerses').innerHTML = v.verses ? v.verses.map(vr => `
-            <div class="verse-item">
-                <span class="ref-tag">${vr.r}</span>
-                <span class="ref-italic">${vr.n}</span>
-            </div>`).join('') : "No scripture recorded.";
-
-        const listify = (str, target) => {
-            document.getElementById(target).innerHTML = str ? str.split(',').filter(i => i.trim()).map(i => `<li>${i.trim()}</li>`).join('') : "<li>N/A</li>";
-        };
-        listify(v.prayers, 'modalPrayers');
-        listify(v.songs, 'modalSongs');
-        listify(v.declaration, 'modalDecList');
-        listify(v.biblical, 'modalBiblical');
-        listify(v.daily, 'modalDaily');
-
+        document.getElementById('modalBanner').style.backgroundImage = `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${v.img})`;
+        document.getElementById('pdfVideoBtn').href = v.link || "#";
+        document.getElementById('modalDiscussions').innerHTML = v.discussions ? v.discussions.map(d => `<div class="discussion-block"><h1 class="disc-h1">${d.h}</h1><ul class="styled-list">${d.p.split(',').map(p => `<li>${p.trim()}</li>`).join('')}</ul></div>`).join('') : "";
+        document.getElementById('modalVerses').innerHTML = v.verses ? v.verses.map(vr => `<div class="verse-item"><span class="ref-tag">${vr.r}</span><span class="ref-italic">${vr.n}</span></div>`).join('') : "";
+        const listify = (str, target) => { document.getElementById(target).innerHTML = str ? str.split(',').map(i => `<li>${i.trim()}</li>`).join('') : "<li>None</li>"; };
+        listify(v.songs, 'modalSongs'); listify(v.prayers, 'modalPrayers'); listify(v.biblical, 'modalBiblical'); listify(v.daily, 'modalDaily'); listify(v.declaration, 'modalDecList');
         document.getElementById('qrCanvas').innerHTML = "";
         if(v.link) new QRCode(document.getElementById("qrCanvas"), { text: v.link, width: 80, height: 80 });
-
         new bootstrap.Modal(document.getElementById('detailsModal')).show();
     }
 
     async function exportPDF() {
-        const btn = document.getElementById('pdfBtn');
-        const theme = document.getElementById('modalTitle').innerText;
-        btn.innerText = "PREPARING PDF...";
-        btn.disabled = true;
-
-        const opt = {
-            margin: 0.3,
-            filename: `KingdomCome_${theme}.pdf`,
-            image: { type: 'jpeg', quality: 1 },
-            html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-        };
-
-        await new Promise(resolve => setTimeout(resolve, 800));
-
-        html2pdf().set(opt).from(document.getElementById('pdfArea')).save().then(() => {
-            btn.innerText = "DOWNLOAD PDF NOTE";
-            btn.disabled = false;
-        });
+        const btn = document.getElementById('pdfBtn'); btn.innerText = "WAIT..."; btn.disabled = true;
+        const opt = { margin: 0.3, filename: `${document.getElementById('modalTitle').innerText}.pdf`, image: { type: 'jpeg', quality: 1 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'letter' }};
+        await new Promise(r => setTimeout(r, 700));
+        html2pdf().set(opt).from(document.getElementById('pdfArea')).save().then(() => { btn.innerText = "DOWNLOAD PDF"; btn.disabled = false; });
     }
 
     function addDiscRow(h="", p="") {
         const div = document.createElement('div'); div.className = "row g-1 mb-1 d-row";
-        div.innerHTML = `<div class="col-4"><input type="text" value="${h}" class="form-control d-h" placeholder="Topic"></div>
-                         <div class="col-8"><input type="text" value="${p}" class="form-control d-p" placeholder="Details (comma separated)"></div>`;
+        div.innerHTML = `<div class="col-4"><input type="text" value="${h}" class="form-control d-h" placeholder="Title"></div><div class="col-8"><input type="text" value="${p}" class="form-control d-p" placeholder="Points (comma split)"></div>`;
         document.getElementById('discContainer').appendChild(div);
     }
 
     function addVRow(r="", n="") {
         const div = document.createElement('div'); div.className = "input-group mb-1 v-row";
-        div.innerHTML = `<input type="text" value="${r}" class="form-control v-ref" placeholder="Ref" onblur="fetchV(this)">
-                         <textarea class="form-control v-text" rows="1">${n}</textarea>`;
+        div.innerHTML = `<input type="text" value="${r}" class="form-control v-ref" placeholder="Ref" onblur="fetchV(this)"><textarea class="form-control v-text" rows="1">${n}</textarea>`;
         document.getElementById('verseBox').appendChild(div);
     }
 
     async function fetchV(i) {
         if(!i.value) return;
         const t = i.nextElementSibling;
-        try {
-            const r = await fetch(`https://bible-api.com/${encodeURIComponent(i.value)}`);
-            const d = await r.json(); t.value = d.text || "Not found.";
-        } catch(e) { t.value = "Error."; }
+        try { const r = await fetch(`https://bible-api.com/${encodeURIComponent(i.value)}`); const d = await r.json(); t.value = d.text || "Not found."; } catch(e) { t.value = "Error."; }
     }
 
     function openForm(id = null) {
         const f = document.getElementById('adminForm'); f.reset();
-        document.getElementById('discContainer').innerHTML = "";
-        document.getElementById('verseBox').innerHTML = "";
+        document.getElementById('discContainer').innerHTML = ""; document.getElementById('verseBox').innerHTML = "";
         if(id) {
             const s = db.find(x => x.id == id);
-            f.title.value = s.title; f.venue.value = s.venue || ""; f.speaker.value = s.speaker;
-            f.link.value = s.link || "";
-            s.discussions?.forEach(d => addDiscRow(d.h, d.p));
-            s.verses?.forEach(v => addVRow(v.r, v.n));
-        } else { addDiscRow(); addVRow(); }
+            f.title.value = s.title; f.venue.value = s.venue || ""; f.speaker.value = s.speaker; f.link.value = s.link || ""; f.songs.value = s.songs || ""; f.prayers.value = s.prayers || ""; f.biblical.value = s.biblical || ""; f.daily.value = s.daily || ""; f.declaration.value = s.declaration || "";
+            s.discussions?.forEach(d => addDiscRow(d.h, d.p)); s.verses?.forEach(v => addVRow(v.r, v.n));
+            document.getElementById('editId').value = id;
+        } else { addDiscRow(); addVRow(); document.getElementById('editId').value = ""; }
         new bootstrap.Modal(document.getElementById('adminModal')).show();
     }
 
@@ -292,16 +236,11 @@
         fd.verses = Array.from(document.querySelectorAll('.v-row')).map(r => ({ r: r.querySelector('.v-ref').value, n: r.querySelector('.v-text').value }));
         const eid = document.getElementById('editId').value || "sermon_" + Date.now();
         fd.id = eid;
-        database.ref('sermons/' + eid).set(fd).then(() => {
-            bootstrap.Modal.getInstance(document.getElementById('adminModal')).hide();
-        });
+        database.ref('sermons/' + eid).set(fd).then(() => bootstrap.Modal.getInstance(document.getElementById('adminModal')).hide());
     };
 
-    document.getElementById('fileIn').onchange = (e) => {
-        const r = new FileReader();
-        r.onload = () => { curImg = r.result; };
-        r.readAsDataURL(e.target.files[0]);
-    };
+    document.getElementById('fileIn').onchange = (e) => { const r = new FileReader(); r.onload = () => { curImg = r.result; }; r.readAsDataURL(e.target.files[0]); };
+    function applyFilter() { const k = document.getElementById('smartSearch').value.toLowerCase(); render(db.filter(s => s.title.toLowerCase().includes(k) || s.speaker.toLowerCase().includes(k))); }
 </script>
 </body>
 </html>
