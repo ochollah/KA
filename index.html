@@ -13,8 +13,17 @@
             background: linear-gradient(rgba(10,10,10,0.98), rgba(10,10,10,0.98)), url('https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=1920&q=80');
             background-attachment: fixed; background-size: cover; font-family: 'Montserrat', sans-serif; color: #fff; min-height: 100vh; overflow-x: hidden;
         }
-        .glass-nav { backdrop-filter: blur(15px); background: rgba(0,0,0,0.9); border-bottom: 1px solid rgba(197, 160, 89, 0.3); padding: 0.8rem 2rem; position: sticky; top: 0; z-index: 1000; }
-        .archive-logo { font-family: 'Cinzel', serif; letter-spacing: 4px; font-size: 1.5rem; color: var(--gold); text-decoration: none; }
+
+        /* Fixed Header - Grid prevents scattering */
+        .glass-nav { 
+            backdrop-filter: blur(15px); background: rgba(0,0,0,0.9); 
+            border-bottom: 1px solid rgba(197, 160, 89, 0.3); padding: 0.8rem 2rem; 
+            position: sticky; top: 0; z-index: 1000;
+            display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+        }
+        .archive-logo { grid-column: 2; font-family: 'Cinzel', serif; letter-spacing: 4px; font-size: 1.5rem; color: var(--gold); text-decoration: none; text-align: center; }
+        .nav-right { grid-column: 3; display: flex; align-items: center; gap: 10px; justify-content: flex-end; }
+        
         .lang-select { background: transparent; color: var(--gold); border: 1px solid var(--gold); border-radius: 20px; padding: 2px 10px; font-size: 0.8rem; outline: none; }
         
         /* Responsive Shelf Item */
@@ -32,7 +41,6 @@
         .spine { width: 24px; height: 100%; left: -12px; transform: rotateY(-90deg); background: #050505; border-right: 1px solid var(--gold); }
         .right-side { width: 24px; height: 100%; right: -12px; transform: rotateY(90deg); background: repeating-linear-gradient(90deg, #ddd, #ddd 1px, #fff 1px, #fff 2px); }
         
-        /* Click to Open Overlay */
         .click-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(197, 160, 89, 0.9); color: #000; padding: 5px 10px; font-size: 0.7rem; font-weight: 800; border-radius: 4px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 10; white-space: nowrap; }
         .book-shelf-item:hover .click-hint { opacity: 1; }
 
@@ -55,17 +63,18 @@
 </head>
 <body>
 
-<header class="glass-nav d-flex justify-content-between align-items-center">
+<header class="glass-nav">
+    <div style="grid-column: 1;"></div>
     <a href="#" class="archive-logo notranslate">KINGDOM COME</a>
-    <div class="d-flex align-items-center gap-3">
+    <div class="nav-right">
         <select class="lang-select" id="langSelect" onchange="changeLang(this.value)">
             <option value="en">English</option><option value="fr">Français</option><option value="sw">Kiswahili</option><option value="es">Español</option>
         </select>
-        <button class="btn btn-sm btn-outline-warning" onclick="toggleBookTheme()">🌓 THEME</button>
-        <div id="adminControls" style="display:none;">
-            <span id="userEmailDisplay" class="small me-2 text-warning"></span>
+        <button class="btn btn-sm btn-outline-warning" onclick="toggleBookTheme()">🌓</button>
+        <div id="adminControls" style="display:none; align-items:center; gap:10px;">
+            <span id="userEmailDisplay" class="small text-warning d-none d-md-inline"></span>
             <button class="btn btn-sm btn-light fw-bold" onclick="openForm()">+ ADD</button>
-            <button class="btn btn-sm btn-outline-danger ms-2" onclick="logoutFirebase()">LOGOUT</button>
+            <button class="btn btn-sm btn-outline-danger" onclick="logoutFirebase()">LOGOUT</button>
         </div>
     </div>
 </header>
@@ -124,10 +133,6 @@
 </div>
 
 <div class="admin-fab" onclick="loginFirebase()">🔑</div>
-
-<div id="google_translate_element" style="display:none;"></div>
-<script type="text/javascript"> function googleTranslateElementInit() { new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element'); } </script>
-<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -200,8 +205,7 @@
 
     function applyFilter() {
         const term = document.getElementById('smartSearch').value.toLowerCase();
-        const filtered = archive.filter(s => s.title.toLowerCase().includes(term) || s.speaker.toLowerCase().includes(term));
-        renderShelf(filtered);
+        renderShelf(archive.filter(s => s.title.toLowerCase().includes(term) || s.speaker.toLowerCase().includes(term)));
     }
 
     function flipPage(num) {
@@ -251,15 +255,10 @@
         bootstrap.Modal.getInstance(document.getElementById('editorModal')).hide();
     };
 
-    async function autoBible(input) {
-        if(!input.value) return;
-        const target = input.nextElementSibling;
-        target.value = "Searching...";
-        try {
-            const res = await fetch(`https://bible-api.com/${encodeURIComponent(input.value)}?translation=kjv`);
-            const data = await res.json();
-            target.value = data.text ? data.text.trim() : "Not found.";
-        } catch(e) { target.value = "Error."; }
+    function addVerseLine(r="", n="") {
+        const d = document.createElement('div'); d.className = "input-group mb-2 verse-row";
+        d.innerHTML = `<input type="text" value="${r}" class="form-control v-ref" placeholder="Ref"><textarea class="form-control v-text" rows="2">${n}</textarea>`;
+        document.getElementById('verseContainer').appendChild(d);
     }
 
     function openForm(id = null) {
@@ -271,14 +270,8 @@
             document.getElementById('fDate').value = s.date; document.getElementById('fVenue').value = s.venue;
             document.getElementById('fLink').value = s.link; quill.root.innerHTML = s.summary;
             currentImgBase64 = s.img; s.verses?.forEach(v => addVerseLine(v.r, v.n));
-        } else { addVerseLine(); currentImgBase64 = ""; }
+        } else { addVerseLine(); }
         new bootstrap.Modal(document.getElementById('editorModal')).show();
-    }
-
-    function addVerseLine(r="", n="") {
-        const d = document.createElement('div'); d.className = "input-group mb-2 verse-row";
-        d.innerHTML = `<input type="text" value="${r}" class="form-control v-ref" placeholder="Ref" onblur="autoBible(this)"><textarea class="form-control v-text" rows="2">${n}</textarea>`;
-        document.getElementById('verseContainer').appendChild(d);
     }
 
     document.getElementById('fileIn').onchange = (e) => {
@@ -296,7 +289,7 @@
         r.readAsDataURL(e.target.files[0]);
     };
 
-    // --- RECTIFIED PDF EXPORT (Omit nothing, correct overlapping) ---
+    // --- RECTIFIED PDF EXPORT ---
     function exportFullPDF() {
         const qrCanvas = document.querySelector("#qrBox canvas");
         const qrData = qrCanvas ? qrCanvas.toDataURL("image/png") : "";
@@ -312,29 +305,26 @@
         pdfContent.style.color = "#1a1a1a";
         pdfContent.innerHTML = `
             <div style="font-family: 'Montserrat', sans-serif;">
-                <div style="min-height: 10.4in; border: 20px solid #c5a059; padding: 40px; position: relative; text-align: center; page-break-after: always; box-sizing: border-box;">
+                <div style="min-height: 10.4in; border: 20px solid #c5a059; padding: 40px; text-align: center; page-break-after: always; box-sizing: border-box; overflow: hidden;">
                     <div style="font-family: 'Cinzel'; color: #c5a059; letter-spacing: 5px; border-bottom: 2px solid #c5a059; display: inline-block; padding-bottom: 5px; margin-bottom: 40px;">KINGDOM COME</div>
-                    <div style="width: 85%; height: 4.5in; margin: 0 auto; border: 5px solid #1a1a1a; padding: 5px; overflow: hidden;"><img src="${activeEntry.img}" style="width: 100%; height: 100%; object-fit: cover;"></div>
-                    <h1 style="font-family: 'Cinzel'; font-size: 2.5rem; margin-top: 30px; text-transform: uppercase;">${activeEntry.title}</h1>
+                    <div style="width: 80%; height: 4.5in; margin: 0 auto; border: 5px solid #1a1a1a; padding: 5px;"><img src="${activeEntry.img}" style="width: 100%; height: 100%; object-fit: cover;"></div>
+                    <h1 style="font-family: 'Cinzel'; font-size: 2.2rem; margin-top: 30px;">${activeEntry.title}</h1>
                     <h2 style="font-weight: 400; color: #444;">By ${activeEntry.speaker}</h2>
-                    <div style="margin-top: 50px;"><p style="font-weight: 600; letter-spacing: 2px;">${activeEntry.date} | ${activeEntry.venue}</p></div>
+                    <p style="margin-top: 40px; font-weight: 600;">${activeEntry.date} | ${activeEntry.venue}</p>
                 </div>
-                <div style="min-height: 10.4in; border: 20px solid #c5a059; padding: 50px; position: relative; page-break-after: always; box-sizing: border-box;">
-                    <div style="text-align: right; font-family: 'Cinzel'; color: #c5a059; font-size: 0.8rem; border-bottom: 1px solid #ddd; padding-bottom: 5px;">${activeEntry.title} | Executive Summary</div>
-                    <h2 style="font-family: 'Cinzel'; margin-top: 30px; border-left: 5px solid #c5a059; padding-left: 15px;">Summary</h2>
-                    <div style="line-height: 1.6; margin-top: 20px; font-size: 1rem; text-align: justify;">${activeEntry.summary}</div>
+                <div style="min-height: 10.4in; border: 20px solid #c5a059; padding: 50px; page-break-after: always; box-sizing: border-box; overflow: visible;">
+                    <h2 style="font-family: 'Cinzel'; border-left: 5px solid #c5a059; padding-left: 15px;">Executive Summary</h2>
+                    <div style="line-height: 1.6; margin-top: 20px; text-align: justify;">${activeEntry.summary}</div>
                 </div>
-                <div style="min-height: 10.4in; border: 20px solid #c5a059; padding: 50px; position: relative; box-sizing: border-box;">
-                    <div style="text-align: right; font-family: 'Cinzel'; color: #c5a059; font-size: 0.8rem; border-bottom: 1px solid #ddd; padding-bottom: 5px;">${activeEntry.title} | Archive Access</div>
-                    <h2 style="font-family: 'Cinzel'; margin-top: 30px; border-left: 5px solid #c5a059; padding-left: 15px;">Scriptures</h2>
-                    <div style="margin-top: 20px; margin-bottom: 150px;">
-                        ${activeEntry.verses.map(v => `<div style="margin-bottom: 20px; page-break-inside: avoid;"><strong>${v.r}:</strong><br><span style="color: #444; font-style: italic;">${v.n}</span></div>`).join('')}
+                <div style="min-height: 10.4in; border: 20px solid #c5a059; padding: 50px; box-sizing: border-box; position: relative; overflow: visible;">
+                    <h2 style="font-family: 'Cinzel'; border-left: 5px solid #c5a059; padding-left: 15px;">Scriptures</h2>
+                    <div style="margin-top: 20px; margin-bottom: 100px;">
+                        ${activeEntry.verses.map(v => `<div style="margin-bottom: 15px; page-break-inside: avoid;"><strong>${v.r}:</strong><br><span style="color: #444; font-style: italic;">${v.n}</span></div>`).join('')}
                     </div>
                     <div style="position: absolute; bottom: 40px; left: 50px; right: 50px; border: 2px dashed #c5a059; padding: 15px; text-align: center; background: #fafafa;">
-                        <h4 style="font-family: 'Cinzel'; font-size: 0.8rem; margin: 0;">DIGITAL ACCESS</h4>
-                        ${qrData ? `<img src="${qrData}" style="width: 80px; margin: 5px 0;">` : ""}
-                        <p style="font-size: 0.7rem; color: #555; margin: 2px 0;">Scan QR or click below for video archive</p>
-                        <a href="${activeEntry.link}" style="color: #ff0000; text-decoration: none; font-weight: bold; font-size: 0.8rem; word-break: break-all;">${activeEntry.link}</a>
+                        <h4 style="font-family: 'Cinzel'; margin: 0;">DIGITAL ACCESS</h4>
+                        ${qrData ? `<img src="${qrData}" style="width: 70px; margin: 5px 0;">` : ""}
+                        <a href="${activeEntry.link}" style="color: #ff0000; font-weight: bold; font-size: 0.8rem; word-break: break-all;">${activeEntry.link}</a>
                     </div>
                 </div>
             </div>`;
