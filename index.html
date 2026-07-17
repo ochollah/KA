@@ -16,23 +16,26 @@
 
         .glass-nav { 
             backdrop-filter: blur(15px); background: rgba(0,0,0,0.9); 
-            border-bottom: 1px solid rgba(197, 160, 89, 0.3); padding: 0.8rem 2rem; 
+            border-bottom: 1px solid rgba(197, 160, 89, 0.3); padding: 0.8rem 1rem; 
             position: sticky; top: 0; z-index: 1000;
-            display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+            display: grid; grid-template-columns: auto 1fr auto; align-items: center;
         }
-        .archive-logo { grid-column: 2; font-family: 'Cinzel', serif; letter-spacing: 4px; font-size: 1.5rem; color: var(--gold); text-decoration: none; text-align: center; }
-        .nav-right { grid-column: 3; display: flex; align-items: center; gap: 10px; justify-content: flex-end; }
+        @media(min-width: 768px) { .glass-nav { padding: 0.8rem 2rem; grid-template-columns: 1fr auto 1fr; } }
+        .archive-logo { grid-column: 1; font-family: 'Cinzel', serif; letter-spacing: 2px; font-size: 1.1rem; color: var(--gold); text-decoration: none; text-align: left; }
+        @media(min-width: 768px) { .archive-logo { grid-column: 2; text-align: center; font-size: 1.5rem; letter-spacing: 4px; } }
+        .nav-right { grid-column: 3; display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
         
-        .lang-select { background: transparent; color: var(--gold); border: 1px solid var(--gold); border-radius: 20px; padding: 2px 10px; font-size: 0.8rem; outline: none; }
+        .lang-select { background: transparent; color: var(--gold); border: 1px solid var(--gold); border-radius: 20px; padding: 2px 6px; font-size: 0.75rem; outline: none; }
         
-        .book-shelf-item { perspective: 1000px; margin-bottom: 60px; cursor: pointer; position: relative; transition: 0.3s; }
-        .book-3d-vertical { width: 140px; height: 200px; position: relative; transform-style: preserve-3d; transform: rotateY(-25deg); transition: 0.6s cubic-bezier(0.2, 1, 0.3, 1); margin: 0 auto; }
+        .book-shelf-item { perspective: 1000px; margin-bottom: 40px; cursor: pointer; position: relative; transition: 0.3s; }
+        .book-3d-vertical { width: 120px; height: 170px; position: relative; transform-style: preserve-3d; transform: rotateY(-25deg); transition: 0.6s cubic-bezier(0.2, 1, 0.3, 1); margin: 0 auto; }
         
+        @media (min-width: 576px) { .book-3d-vertical { width: 140px; height: 200px; } }
         @media (min-width: 768px) { .book-3d-vertical { width: 160px; height: 230px; } }
 
         .book-shelf-item:hover .book-3d-vertical { transform: rotateY(-5deg) scale(1.05); }
         .face { position: absolute; background: #111; box-shadow: inset 0 0 15px rgba(0,0,0,0.5); }
-        .front { width: 100%; height: 100%; z-index: 2; transform: translateZ(12px); border-radius: 2px 5px 5px 2px; overflow: hidden; }
+        .front { width: 100%; height: 100%; z-index: 2; transform: translateZ(12px); border-radius: 2px 5px 5px 2px; overflow: hidden; border: 1px solid rgba(197, 160, 89, 0.5); }
         .front img { width: 100%; height: 100%; object-fit: cover; }
         .spine { width: 24px; height: 100%; left: -12px; transform: rotateY(-90deg); background: #050505; border-right: 1px solid var(--gold); }
         .right-side { width: 24px; height: 100%; right: -12px; transform: rotateY(90deg); background: repeating-linear-gradient(90deg, #ddd, #ddd 1px, #fff 1px, #fff 2px); }
@@ -40,89 +43,102 @@
         .click-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(197, 160, 89, 0.9); color: #000; padding: 5px 10px; font-size: 0.7rem; font-weight: 800; border-radius: 4px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 10; white-space: nowrap; }
         .book-shelf-item:hover .click-hint { opacity: 1; }
 
-        #flipbookOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); display: none; align-items: center; justify-content: center; z-index: 5000; padding: 20px; }
-        .close-btn { position: fixed; top: 15px; right: 25px; color: var(--gold); cursor: pointer; font-size: 3rem; z-index: 9999; line-height: 1; }
+        #flipbookOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); display: none; align-items: center; justify-content: center; z-index: 5000; padding: 10px; }
+        @media(min-width: 576px) { #flipbookOverlay { padding: 20px; } }
+        .close-btn { position: fixed; top: 10px; right: 20px; color: var(--gold); cursor: pointer; font-size: 2.5rem; z-index: 9999; line-height: 1; }
         
-        .book-container { width: 100%; max-width: 520px; height: 80vh; max-height: 680px; position: relative; perspective: 3000px; }
-        .page { width: 100%; height: 100%; position: absolute; top: 0; left: 0; padding: 30px; transform-origin: left center; transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1); backface-visibility: hidden; border: 1px solid #ccc; overflow-y: auto; cursor: pointer; }
+        .book-container { width: 100%; max-width: 480px; height: 85vh; max-height: 750px; position: relative; perspective: 3000px; }
+        .page { width: 100%; height: 100%; position: absolute; top: 0; left: 0; padding: 20px; transform-origin: left center; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); backface-visibility: hidden; border: 1px solid #ccc; overflow-y: auto; cursor: pointer; box-sizing: border-box; }
         
+        @media (min-width: 576px) { .page { padding: 35px; } }
         @media (min-width: 768px) { .page { padding: 45px; } }
         
         .page.light-mode { background: var(--ivory); color: var(--ink); }
         .page.dark-mode { background: #1a1a1a; color: #eee; border-color: #444; }
-        .page-1 { z-index: 30; } .page-2 { z-index: 20; } .page-3 { z-index: 10; cursor: default; }
+        .page-1 { z-index: 30; } .page-2 { z-index: 20; } .page-3 { z-index: 10; }
         .flipped { transform: rotateY(-180deg); z-index: 1 !important; }
-        .label-gold { font-size: 0.75rem; font-weight: 800; color: var(--gold); text-transform: uppercase; border-bottom: 2px solid var(--gold); margin: 20px 0 10px; display: block; letter-spacing: 1px; }
-        .youtube-btn { background: #ff0000; color: white !important; padding: 12px; border-radius: 5px; text-decoration: none; display: block; text-align: center; font-weight: bold; font-size: 0.85rem; margin-top: 20px; }
-        .admin-fab { position: fixed; bottom: 30px; right: 30px; background: var(--gold); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .label-gold { font-size: 0.75rem; font-weight: 800; color: var(--gold); text-transform: uppercase; border-bottom: 2px solid var(--gold); margin: 15px 0 8px; display: block; letter-spacing: 1px; }
+        .youtube-btn { background: #ff0000; color: white !important; padding: 10px; border-radius: 5px; text-decoration: none; display: block; text-align: center; font-weight: bold; font-size: 0.82rem; margin-top: 15px; }
+        .admin-fab { position: fixed; bottom: 20px; right: 20px; background: var(--gold); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 1.2rem; }
+        @media(min-width: 768px) { .admin-fab { bottom: 30px; right: 30px; width: 60px; height: 60px; font-size: 1.5rem; } }
+        
+        .tap-hint { font-size: 0.65rem; color: var(--gold); text-align: center; display: block; letter-spacing: 2px; margin-top: 10px; font-weight: bold; text-transform: uppercase; opacity: 0.7; }
     </style>
 </head>
 <body>
 
 <header class="glass-nav">
-    <div style="grid-column: 1;"></div>
     <a href="#" class="archive-logo notranslate">KINGDOM COME</a>
     <div class="nav-right">
         <select class="lang-select" id="langSelect" onchange="changeLang(this.value)">
             <option value="en">English</option><option value="fr">Français</option><option value="sw">Kiswahili</option><option value="es">Español</option>
         </select>
-        <button class="btn btn-sm btn-outline-warning" onclick="toggleBookTheme()">🌓</button>
-        <div id="adminControls" style="display:none; align-items:center; gap:10px;">
-            <span id="userEmailDisplay" class="small text-warning d-none d-md-inline"></span>
-            <button class="btn btn-sm btn-light fw-bold" onclick="openForm()">+ ADD</button>
-            <button class="btn btn-sm btn-outline-danger" onclick="logoutFirebase()">LOGOUT</button>
+        <button class="btn btn-sm text-warning px-1 px-sm-2" onclick="toggleBookTheme()">🌓</button>
+        <div id="adminControls" style="display:none; align-items:center; gap:5px;">
+            <span id="userEmailDisplay" class="small text-warning d-none d-lg-inline"></span>
+            <button class="btn btn-sm btn-light fw-bold py-0 px-2" onclick="openForm()">+ ADD</button>
+            <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="logoutFirebase()">LOGOUT</button>
         </div>
     </div>
 </header>
 
-<div class="container text-center pt-5">
-    <input type="text" id="smartSearch" class="form-control mb-5 mx-auto" style="max-width:500px; background:rgba(255,255,255,0.05); color:#fff; border-radius:30px; border:1px solid var(--gold);" oninput="applyFilter()" placeholder="Search Archives...">
-    <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-4 g-md-5" id="mainGrid"></div>
+<div class="container text-center pt-4 px-3">
+    <input type="text" id="smartSearch" class="form-control mb-4 mx-auto" style="max-width:500px; background:rgba(255,255,255,0.05); color:#fff; border-radius:30px; border:1px solid var(--gold);" oninput="applyFilter()" placeholder="Search Archives...">
+    <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3 g-md-4" id="mainGrid"></div>
 </div>
 
 <div id="flipbookOverlay">
     <div class="close-btn" onclick="closeBook()">&times;</div>
     <div class="book-container">
-        <div class="page page-1 light-mode" id="p1" onclick="flipPage(1)"><div id="viewImg" style="height:100%; pointer-events:none;"></div></div>
+        <div class="page page-1 light-mode" id="p1" onclick="flipPage(1)">
+            <div id="viewImg" style="height:calc(100% - 25px); pointer-events:none; border: 4px double var(--gold); padding: 4px; box-sizing: border-box;"></div>
+            <span class="tap-hint">Tap Cover To Open</span>
+        </div>
         <div class="page page-2 light-mode" id="p2" onclick="flipPage(2)">
             <span class="label-gold">Sermon Details</span>
-            <h3 id="viewTitle" style="font-family:'Cinzel';"></h3>
-            <div id="viewMeta" class="small mt-3"></div>
+            <h3 id="viewTitle" style="font-family:'Cinzel'; font-size:1.35rem; margin-bottom:5px;"></h3>
+            <div id="viewMeta" class="small mt-2" style="font-size:0.85rem;"></div>
             <span class="label-gold">YouTube</span>
-            <div id="qrBox" class="text-center bg-white p-2 d-inline-block"></div>
-            <a id="viewYT" href="#" target="_blank" class="youtube-btn" onclick="event.stopPropagation()">WATCH VIDEO</a>
-            <span class="label-gold">Scriptures</span>
-            <div id="viewVerses" class="small"></div>
-            <div id="adminCrudPanel" style="display:none;" class="mt-4 pt-3 border-top" onclick="event.stopPropagation()">
-                <button class="btn btn-dark w-100 mb-2 btn-sm fw-bold" onclick="editCurrent()">EDIT</button>
-                <button class="btn btn-outline-danger w-100 btn-sm fw-bold" onclick="deleteCurrent()">DELETE</button>
+            <div class="d-flex align-items-center gap-3 my-2">
+                <div id="qrBox" class="text-center bg-white p-1 d-inline-block" style="border:1px solid #ccc;"></div>
+                <a id="viewYT" href="#" target="_blank" class="youtube-btn flex-grow-1 m-0" onclick="event.stopPropagation()">WATCH VIDEO</a>
             </div>
+            <span class="label-gold">Scriptures</span>
+            <div id="viewVerses" class="small" style="font-size:0.85rem;"></div>
+            <div id="adminCrudPanel" style="display:none;" class="mt-3 pt-2 border-top" onclick="event.stopPropagation()">
+                <div class="row g-2">
+                    <div class="col-6"><button class="btn btn-dark w-100 btn-sm fw-bold" onclick="editCurrent()">EDIT</button></div>
+                    <div class="col-6"><button class="btn btn-outline-danger w-100 btn-sm fw-bold" onclick="deleteCurrent()">DELETE</button></div>
+                </div>
+            </div>
+            <span class="tap-hint">Tap To View Executive Summary</span>
         </div>
         <div class="page page-3 light-mode" id="p3" onclick="flipPage(3)">
             <span class="label-gold">Executive Summary</span>
-            <div id="viewSummary" style="line-height: 1.8; font-size: 0.95rem;"></div>
-            <hr class="my-5">
-            <button onclick="exportFullPDF()" class="btn btn-gold w-100 fw-bold py-3 text-white" style="background:var(--gold)">EXPORT MASTER PDF</button>
+            <div id="viewSummary" style="line-height: 1.6; font-size: 0.9rem;"></div>
+            <hr class="my-3">
+            <button onclick="event.stopPropagation(); exportFullPDF();" class="btn btn-gold w-100 fw-bold py-2 text-white" style="background:var(--gold); font-size:0.85rem;">EXPORT MASTER PDF</button>
+            <span class="tap-hint">Tap To Close Document</span>
         </div>
     </div>
 </div>
 
 <div class="modal fade" id="editorModal" tabindex="-1">
     <div class="modal-dialog modal-lg text-dark">
-        <div class="modal-content p-4">
+        <div class="modal-content p-3 p-md-4">
             <form id="editorForm">
                 <input type="hidden" id="editId">
-                <div class="row g-3">
-                    <div class="col-md-6"><label class="small fw-bold">Theme</label><input type="text" id="fTitle" class="form-control" required></div>
-                    <div class="col-md-6"><label class="small fw-bold">Preacher</label><input type="text" id="fSpeaker" class="form-control" required></div>
-                    <div class="col-md-4"><label class="small fw-bold">Date</label><input type="date" id="fDate" class="form-control"></div>
-                    <div class="col-md-8"><label class="small fw-bold">Venue</label><input type="text" id="fVenue" class="form-control"></div>
-                    <div class="col-12"><label class="small fw-bold">YouTube URL</label><input type="url" id="fLink" class="form-control"></div>
-                    <div class="col-12"><label class="small fw-bold">Cover Image</label><input type="file" id="fileIn" class="form-control" accept="image/*"></div>
-                    <div class="col-12"><label class="small fw-bold">Executive Summary</label><div id="quill-editor" style="height:200px;"></div></div>
-                    <div class="col-12"><div id="verseContainer"></div><button type="button" class="btn btn-sm btn-link" onclick="addVerseLine()">+ Add Scripture</button></div>
+                <div class="row g-2 g-md-3">
+                    <div class="col-md-6"><label class="small fw-bold">Theme</label><input type="text" id="fTitle" class="form-control form-control-sm" required></div>
+                    <div class="col-md-6"><label class="small fw-bold">Preacher</label><input type="text" id="fSpeaker" class="form-control form-control-sm" required></div>
+                    <div class="col-md-4"><label class="small fw-bold">Date</label><input type="date" id="fDate" class="form-control form-control-sm"></div>
+                    <div class="col-md-8"><label class="small fw-bold">Venue</label><input type="text" id="fVenue" class="form-control form-control-sm"></div>
+                    <div class="col-12"><label class="small fw-bold">YouTube URL</label><input type="url" id="fLink" class="form-control form-control-sm"></div>
+                    <div class="col-12"><label class="small fw-bold">Cover Image</label><input type="file" id="fileIn" class="form-control form-control-sm" accept="image/*"></div>
+                    <div class="col-12"><label class="small fw-bold">Executive Summary</label><div id="quill-editor" style="height:150px;"></div></div>
+                    <div class="col-12"><div id="verseContainer"></div><button type="button" class="btn btn-sm btn-link p-0 text-decoration-none fw-bold" onclick="addVerseLine()">+ Add Scripture</button></div>
                 </div>
-                <button type="submit" class="btn btn-warning w-100 mt-4 fw-bold">SAVE TO CLOUD ARCHIVE</button>
+                <button type="submit" class="btn btn-warning w-100 mt-3 fw-bold btn-sm">SAVE TO CLOUD ARCHIVE</button>
             </form>
         </div>
     </div>
@@ -166,23 +182,56 @@
         if(email && pass) { auth.signInWithEmailAndPassword(email, pass).catch(err => alert("Login Failed: " + err.message)); }
     }
 
-    function logoutFirebase() { auth.signOut(); location.reload(); }
+    function logoutFirebase() { auth.signOut(); localStorage.removeItem('local_archive'); location.reload(); }
 
     auth.onAuthStateChanged(user => {
         isAuthorized = !!user;
         if (user) {
-            document.getElementById('adminControls').style.display = "flex";
+            document.getElementById('adminControls').style.setProperty("display", "flex", "important");
             document.getElementById('userEmailDisplay').innerText = user.email;
         }
+        loadCachedData();
         syncFromCloud();
     });
 
-    async function syncFromCloud() {
-        db.collection("sermons").orderBy("date", "desc").onSnapshot(snap => {
-            archive = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    function loadCachedData() {
+    try {
+        const cached = localStorage.getItem('local_archive');
+        if (cached) {
+            archive = JSON.parse(cached);
             renderShelf();
-        });
+        }
+    } catch (e) {
+        console.error("Failed to parse local cache data", e);
     }
+}
+
+async function syncFromCloud() {
+    db.collection("sermons").orderBy("date", "desc").onSnapshot(snap => {
+        archive = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Strip out base64 images to save storage space (keeps quota well below 5MB)
+        try {
+            const strippedArchive = archive.map(item => {
+                const copy = { ...item };
+                // If it looks like a long base64 string, drop it or use placeholder for thumbnail
+                if (copy.img && copy.img.startsWith('data:image')) {
+                    copy.img = ""; 
+                }
+                return copy;
+            });
+            localStorage.setItem('local_archive', JSON.stringify(strippedArchive));
+        } catch (storageError) {
+            console.warn("Storage quota exceeded even with optimization. Clearing old cache window.", storageError);
+            localStorage.removeItem('local_archive');
+        }
+        
+        renderShelf();
+    }, () => {
+        console.log("Working offline with local cached data window.");
+    });
+}
+
 
     function renderShelf(data = archive) {
         document.getElementById('mainGrid').innerHTML = data.map(s => `
@@ -191,10 +240,10 @@
                 <div class="book-3d-vertical">
                     <div class="face spine"></div>
                     <div class="face right-side"></div>
-                    <div class="face front"><img src="${s.img || ''}"></div>
+                    <div class="face front"><img src="${s.img || ''}" alt="Cover"></div>
                 </div>
-                <div class="mt-3 small fw-bold text-uppercase" style="color:var(--gold); font-size:10px;">
-                    THEME: ${s.title}
+                <div class="mt-2 small fw-bold text-uppercase px-1 text-truncate" style="color:var(--gold); font-size:10px;">
+                    ${s.title}
                 </div>
             </div>`).join('');
     }
@@ -205,7 +254,7 @@
     }
 
     function flipPage(num) {
-        flipSound.play();
+        try { flipSound.play(); } catch(e){}
         if(num === 1) document.getElementById('p1').classList.add('flipped');
         else if(num === 2) document.getElementById('p2').classList.add('flipped');
         else { document.getElementById('p1').classList.remove('flipped'); document.getElementById('p2').classList.remove('flipped'); }
@@ -216,14 +265,14 @@
 
     function openFlipbook(id) {
         activeEntry = archive.find(x => x.id === id);
-        document.getElementById('viewImg').innerHTML = `<img src="${activeEntry.img}" style="width:100%; height:100%; object-fit:cover;">`;
+        document.getElementById('viewImg').innerHTML = `<img src="${activeEntry.img}" style="width:100%; height:100%; object-fit:cover; border:1px solid var(--gold);">`;
         document.getElementById('viewTitle').innerText = activeEntry.title;
         document.getElementById('viewMeta').innerHTML = `<b>Preacher:</b> ${activeEntry.speaker}<br><b>Venue:</b> ${activeEntry.venue}<br><b>Date:</b> ${activeEntry.date}`;
         document.getElementById('viewSummary').innerHTML = activeEntry.summary || "";
         document.getElementById('viewYT').href = activeEntry.link || "#";
         document.getElementById('viewVerses').innerHTML = activeEntry.verses?.map(v => `<p class="mb-2"><b>${v.r}</b>: ${v.n}</p>`).join('') || "";
         document.getElementById('qrBox').innerHTML = "";
-        if(activeEntry.link) new QRCode(document.getElementById("qrBox"), { text: activeEntry.link, width: 80, height: 80 });
+        if(activeEntry.link) new QRCode(document.getElementById("qrBox"), { text: activeEntry.link, width: 60, height: 60 });
         document.getElementById('adminCrudPanel').style.display = isAuthorized ? 'block' : 'none';
         document.getElementById('p1').classList.remove('flipped'); document.getElementById('p2').classList.remove('flipped');
         document.getElementById('flipbookOverlay').style.display = 'flex';
@@ -231,7 +280,6 @@
 
     function closeBook() { document.getElementById('flipbookOverlay').style.display = 'none'; }
 
-    // --- RECTIFIED BIBLE API LOGIC ---
     async function autoBible(input) {
         if(!input.value) return;
         const target = input.nextElementSibling;
@@ -240,7 +288,7 @@
             const res = await fetch(`https://bible-api.com/${encodeURIComponent(input.value)}?translation=kjv`);
             const data = await res.json();
             target.value = data.text ? data.text.trim() : "Reference not found.";
-        } catch(e) { target.value = "Connection error."; }
+        } catch(e) { target.value = "Connection error. Loaded offline."; }
     }
 
     document.getElementById('editorForm').onsubmit = async function(e) {
@@ -265,8 +313,7 @@
 
     function addVerseLine(r="", n="") {
         const d = document.createElement('div'); d.className = "input-group mb-2 verse-row";
-        // Added onblur="autoBible(this)" to link the reference input to the search function
-        d.innerHTML = `<input type="text" value="${r}" class="form-control v-ref" placeholder="Ref (e.g. John 3:16)" onblur="autoBible(this)"><textarea class="form-control v-text" rows="2" placeholder="Scripture text will appear here...">${n}</textarea>`;
+        d.innerHTML = `<input type="text" value="${r}" class="form-control form-control-sm v-ref" placeholder="Ref (e.g. John 3:16)" onblur="autoBible(this)"><textarea class="form-control form-control-sm v-text" rows="2" placeholder="Scripture text will appear here...">${n}</textarea>`;
         document.getElementById('verseContainer').appendChild(d);
     }
 
@@ -295,7 +342,7 @@
             };
             img.src = ev.target.result;
         };
-        r.readAsDataURL(e.target.files[0]);
+        if(e.target.files[0]) r.readAsDataURL(e.target.files[0]);
     };
 
     function exportFullPDF() {
@@ -306,34 +353,34 @@
         pdfContent.style.backgroundColor = "#ffffff";
         pdfContent.style.color = "#1a1a1a";
         pdfContent.innerHTML = `
-            <div style="font-family: 'Montserrat', sans-serif; overflow: visible;">
-                <div style="min-height: 10.5in; border: 20px solid #c5a059; padding: 40px; text-align: center; page-break-after: always; box-sizing: border-box;">
-                    <div style="font-family: 'Cinzel'; color: #c5a059; letter-spacing: 5px; border-bottom: 2px solid #c5a059; display: inline-block; padding-bottom: 5px; margin-bottom: 40px;">KINGDOM COME</div>
-                    <div style="width: 80%; height: 4.5in; margin: 0 auto; border: 5px solid #1a1a1a; padding: 5px;">
+            <div style="font-family: 'Montserrat', sans-serif; background: #fff; color: #111;">
+                <div style="min-height: 10.4in; border: 20px solid #c5a059; padding: 40px; text-align: center; box-sizing: border-box; page-break-after: always; background:#fff;">
+                    <div style="font-family: 'Cinzel'; color: #c5a059; letter-spacing: 5px; border-bottom: 2px solid #c5a059; display: inline-block; padding-bottom: 5px; margin-bottom: 40px; font-size: 24px; font-weight: bold;">KINGDOM COME</div>
+                    <div style="width: 320px; height: 440px; margin: 0 auto; border: 5px double #c5a059; padding: 5px; background: #fafafa;">
                         <img src="${activeEntry.img}" style="width: 100%; height: 100%; object-fit: cover;">
                     </div>
-                    <h1 style="font-family: 'Cinzel'; font-size: 2.2rem; margin-top: 30px; text-transform: uppercase;">${activeEntry.title}</h1>
-                    <h2 style="font-weight: 400; color: #444;">By ${activeEntry.speaker}</h2>
-                    <p style="margin-top: 40px; font-weight: 600; letter-spacing: 1px;">${activeEntry.date} | ${activeEntry.venue}</p>
+                    <h1 style="font-family: 'Cinzel'; font-size: 2.2rem; margin-top: 30px; text-transform: uppercase; color:#1a1a1a;">${activeEntry.title}</h1>
+                    <h2 style="font-weight: 400; color: #444; font-size: 1.4rem;">By ${activeEntry.speaker}</h2>
+                    <p style="margin-top: 40px; font-weight: 600; letter-spacing: 1px; color: #666;">${activeEntry.date} | ${activeEntry.venue}</p>
                 </div>
-                <div style="min-height: 10.5in; border: 20px solid #c5a059; padding: 50px; box-sizing: border-box; overflow: visible; page-break-after: always;">
-                    <h2 style="font-family: 'Cinzel'; border-left: 5px solid #c5a059; padding-left: 15px;">Executive Summary</h2>
-                    <div style="line-height: 1.6; margin-top: 20px; text-align: justify; font-size: 11pt;">${activeEntry.summary}</div>
+                <div style="min-height: 10.4in; border: 20px solid #c5a059; padding: 50px; box-sizing: border-box; page-break-after: always; background:#fff;">
+                    <h2 style="font-family: 'Cinzel'; border-left: 5px solid #c5a059; padding-left: 15px; color:#c5a059;">Executive Summary</h2>
+                    <div style="line-height: 1.8; margin-top: 20px; text-align: justify; font-size: 12pt; color:#222;">${activeEntry.summary}</div>
                 </div>
-                <div style="min-height: 10.5in; border: 20px solid #c5a059; padding: 50px; box-sizing: border-box; position: relative; overflow: visible;">
-                    <h2 style="font-family: 'Cinzel'; border-left: 5px solid #c5a059; padding-left: 15px;">Scriptures</h2>
-                    <div style="margin-top: 20px; margin-bottom: 100px;">
-                        ${activeEntry.verses.map(v => `
-                            <div style="margin-bottom: 15px; page-break-inside: avoid;">
-                                <strong>${v.r}:</strong><br>
-                                <span style="color: #444; font-style: italic;">${v.n}</span>
+                <div style="min-height: 10.4in; border: 20px solid #c5a059; padding: 50px; box-sizing: border-box; background:#fff; position: relative;">
+                    <h2 style="font-family: 'Cinzel'; border-left: 5px solid #c5a059; padding-left: 15px; color:#c5a059;">Scriptures</h2>
+                    <div style="margin-top: 20px; margin-bottom: 120px;">
+                        ${activeEntry.verses ? activeEntry.verses.map(v => `
+                            <div style="margin-bottom: 20px; page-break-inside: avoid;">
+                                <strong style="color:#1a1a1a; font-size:11pt;">${v.r}</strong><br>
+                                <span style="color: #444; font-style: italic; font-size:10.5pt; line-height:1.5;">${v.n}</span>
                             </div>
-                        `).join('')}
+                        `).join('') : ''}
                     </div>
                     <div style="position: absolute; bottom: 40px; left: 50px; right: 50px; border: 2px dashed #c5a059; padding: 15px; text-align: center; background: #fafafa; page-break-inside: avoid;">
-                        <h4 style="font-family: 'Cinzel'; margin: 0; font-size: 10pt;">DIGITAL ARCHIVE ACCESS</h4>
-                        ${qrData ? `<img src="${qrData}" style="width: 80px; margin: 10px 0;">` : ""}
-                        <p style="font-size: 9pt; color: #ff0000; font-weight: bold; word-break: break-all;">${activeEntry.link}</p>
+                        <h4 style="font-family: 'Cinzel'; margin: 0; font-size: 10pt; color:#c5a059; letter-spacing:1px;">DIGITAL ARCHIVE ACCESS</h4>
+                        ${qrData ? `<img src="${qrData}" style="width: 70px; margin: 10px 0;">` : ""}
+                        <p style="font-size: 8.5pt; color: #ff0000; font-weight: bold; word-break: break-all; margin:0;">${activeEntry.link || ''}</p>
                     </div>
                 </div>
             </div>`;
@@ -341,15 +388,15 @@
         const opt = { 
             margin: 0, 
             filename: `Archive_${activeEntry.title.replace(/\s+/g, '_')}.pdf`, 
-            image: { type: 'jpeg', quality: 1.0 }, 
-            html2canvas: { scale: 2, useCORS: true, letterRendering: true }, 
+            image: { type: 'jpeg', quality: 0.98 }, 
+            html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' }, 
             jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
             pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
         };
 
         setTimeout(() => {
             html2pdf().set(opt).from(pdfContent).save();
-        }, 500);
+        }, 600);
     }
 
     function editCurrent() { closeBook(); openForm(activeEntry.id); }
