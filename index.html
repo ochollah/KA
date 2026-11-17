@@ -2,80 +2,198 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="color-scheme" content="dark">
+    <meta name="description" content="Kingdom Come — a digital archive of sermons with executive summaries, scriptures, QR access, sharing and PDF export.">
+    <meta property="og:title" content="Kingdom Come | Firebase Executive Archive">
+    <meta property="og:description" content="Browse sermons as a 3D bookshelf. Read summaries, scriptures, share and export as PDF.">
+    <meta property="og:type" content="website">
     <title>Kingdom Come | Firebase Executive Archive</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Montserrat:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --gold: #c5a059; --dark: #0a0a0a; --ivory: #fdfaf0; --ink: #222; }
-        body { 
-            background: linear-gradient(rgba(10,10,10,0.98), rgba(10,10,10,0.98)), url('https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=1920&q=80');
-            background-attachment: fixed; background-size: cover; font-family: 'Montserrat', sans-serif; color: #fff; min-height: 100vh; overflow-x: hidden;
+        /* ============ TOKENS ============ */
+        :root {
+            --gold: #c5a059; --gold-soft: rgba(197,160,89,.35); --dark: #0a0a0a; --ivory: #fdfaf0; --ink: #222;
+            --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px);
+            --safe-l: env(safe-area-inset-left, 0px); --safe-r: env(safe-area-inset-right, 0px);
+            --bw: clamp(104px, 22vw, 168px);          /* book width, fluid */
+            --card-min: clamp(128px, 28vw, 200px);
+            --ease: cubic-bezier(.2,1,.3,1);
         }
-
-        .glass-nav { 
-            backdrop-filter: blur(15px); background: rgba(0,0,0,0.9); 
-            border-bottom: 1px solid rgba(197, 160, 89, 0.3); padding: 0.8rem 1rem; 
-            position: sticky; top: 0; z-index: 1000;
-            display: grid; grid-template-columns: auto 1fr auto; align-items: center;
+        * { -webkit-tap-highlight-color: transparent; }
+        html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+        body {
+            background: linear-gradient(rgba(10,10,10,.98), rgba(10,10,10,.98)), url('https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=1920&q=80');
+            background-attachment: fixed; background-size: cover; font-family: 'Montserrat', system-ui, sans-serif; color: #fff;
+            min-height: 100vh; min-height: 100dvh; overflow-x: hidden; padding-left: var(--safe-l); padding-right: var(--safe-r);
         }
-        @media(min-width: 768px) { .glass-nav { padding: 0.8rem 2rem; grid-template-columns: 1fr auto 1fr; } }
-        .archive-logo { grid-column: 1; font-family: 'Cinzel', serif; letter-spacing: 2px; font-size: 1.1rem; color: var(--gold); text-decoration: none; text-align: left; }
-        @media(min-width: 768px) { .archive-logo { grid-column: 2; text-align: center; font-size: 1.5rem; letter-spacing: 4px; } }
-        .nav-right { grid-column: 3; display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
-        
-        .lang-select { background: transparent; color: var(--gold); border: 1px solid var(--gold); border-radius: 20px; padding: 2px 6px; font-size: 0.75rem; outline: none; }
-        
-        .book-shelf-item { perspective: 1000px; margin-bottom: 40px; cursor: pointer; position: relative; transition: 0.3s; }
-        .book-3d-vertical { width: 120px; height: 170px; position: relative; transform-style: preserve-3d; transform: rotateY(-25deg); transition: 0.6s cubic-bezier(0.2, 1, 0.3, 1); margin: 0 auto; }
-        
-        @media (min-width: 576px) { .book-3d-vertical { width: 140px; height: 200px; } }
-        @media (min-width: 768px) { .book-3d-vertical { width: 160px; height: 230px; } }
+        body.no-scroll { overflow: hidden; }
+        :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+        .skip-link { position: absolute; left: -999px; top: 8px; background: var(--gold); color: #000; padding: 6px 12px; z-index: 99999; border-radius: 4px; }
+        .skip-link:focus { left: 8px; }
 
-        .book-shelf-item:hover .book-3d-vertical { transform: rotateY(-5deg) scale(1.05); }
-        .face { position: absolute; background: #111; box-shadow: inset 0 0 15px rgba(0,0,0,0.5); }
-        .front { width: 100%; height: 100%; z-index: 2; transform: translateZ(12px); border-radius: 2px 5px 5px 2px; overflow: hidden; border: 1px solid rgba(197, 160, 89, 0.5); }
-        .front img { width: 100%; height: 100%; object-fit: cover; }
-        .spine { width: 24px; height: 100%; left: -12px; transform: rotateY(-90deg); background: #050505; border-right: 1px solid var(--gold); }
-        .right-side { width: 24px; height: 100%; right: -12px; transform: rotateY(90deg); background: repeating-linear-gradient(90deg, #ddd, #ddd 1px, #fff 1px, #fff 2px); }
-        
-        .click-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(197, 160, 89, 0.9); color: #000; padding: 5px 10px; font-size: 0.7rem; font-weight: 800; border-radius: 4px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 10; white-space: nowrap; }
-        .book-shelf-item:hover .click-hint { opacity: 1; }
+        /* ============ NAV ============ */
+        .glass-nav {
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); background: rgba(0,0,0,.9);
+            border-bottom: 1px solid var(--gold-soft); padding: calc(.8rem + var(--safe-t)) 1rem .8rem;
+            position: sticky; top: 0; z-index: 1000; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px;
+        }
+        @media (min-width: 768px) { .glass-nav { padding-left: 2rem; padding-right: 2rem; grid-template-columns: 1fr auto 1fr; } }
+        .archive-logo { grid-column: 1; font-family: 'Cinzel', serif; letter-spacing: 2px; font-size: clamp(1rem, 3.5vw, 1.5rem); color: var(--gold); text-decoration: none; text-align: left; white-space: nowrap; }
+        @media (min-width: 768px) { .archive-logo { grid-column: 2; text-align: center; letter-spacing: 4px; } }
+        .nav-right { grid-column: 3; display: flex; align-items: center; gap: 6px; justify-content: flex-end; flex-wrap: nowrap; }
+        .lang-select { background: #000; color: var(--gold); border: 1px solid var(--gold); border-radius: 20px; padding: 2px 6px; font-size: .75rem; outline: none; }
+        .icon-btn { background: transparent; border: 1px solid transparent; color: var(--gold); border-radius: 8px; padding: 2px 8px; font-size: 1rem; line-height: 1.6; }
+        .icon-btn:hover { background: rgba(197,160,89,.15); border-color: var(--gold-soft); }
+        .dropdown-menu { --bs-dropdown-bg: #121212; --bs-dropdown-color: #eee; --bs-dropdown-link-color: #eee; --bs-dropdown-link-hover-bg: rgba(197,160,89,.2); --bs-dropdown-link-hover-color: #fff; --bs-dropdown-border-color: var(--gold-soft); font-size: .85rem; z-index: 6000; }
+        .dropdown-header { color: var(--gold); font-size: .68rem; letter-spacing: 1px; text-transform: uppercase; }
 
+        /* ============ SEARCH / TOOLBAR ============ */
+        .archive-toolbar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; max-width: 760px; margin: 0 auto 1rem; }
+        .archive-toolbar .form-control, .archive-toolbar .form-select { background-color: rgba(255,255,255,.05); color: #fff; border: 1px solid var(--gold); border-radius: 30px; }
+        .archive-toolbar .form-select option { color: #000; }
+        .archive-toolbar .form-control::placeholder { color: #999; }
+        #smartSearch { flex: 1 1 240px; min-width: 0; }
+        #sortSelect { flex: 0 1 190px; }
+        .archive-stats { font-size: .72rem; color: #aaa; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 1.2rem; }
+
+        /* ============ 3D SHELF ============ */
+        .shelf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr)); gap: clamp(12px, 3vw, 32px) clamp(8px, 2vw, 24px); padding-bottom: 110px; }
+        .book-shelf-item { perspective: 1000px; cursor: pointer; position: relative; transition: transform .3s; outline-offset: 6px; border-radius: 8px; }
+        .book-3d-vertical { width: var(--bw); height: calc(var(--bw) * 1.43); position: relative; transform-style: preserve-3d; transform: rotateY(-25deg); transition: transform .6s var(--ease); margin: 0 auto; }
+        .face { position: absolute; background: #111; box-shadow: inset 0 0 15px rgba(0,0,0,.5); }
+        .front { width: 100%; height: 100%; z-index: 2; transform: translateZ(calc(var(--bw) * .075)); border-radius: 2px 5px 5px 2px; overflow: hidden; border: 1px solid rgba(197,160,89,.5); }
+        .front img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .cover-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; text-align: center; padding: 10px; font-family: 'Cinzel', serif; color: var(--gold); font-size: .8rem; background: radial-gradient(circle at 30% 20%, #2a2112, #0b0b0b); }
+        .spine { width: calc(var(--bw) * .15); height: 100%; left: calc(var(--bw) * -.075); transform: rotateY(-90deg); background: #050505; border-right: 1px solid var(--gold); }
+        .right-side { width: calc(var(--bw) * .15); height: 100%; right: calc(var(--bw) * -.075); transform: rotateY(90deg); background: repeating-linear-gradient(90deg, #ddd, #ddd 1px, #fff 1px, #fff 2px); }
+        .book-shelf-item:focus-visible .book-3d-vertical { transform: rotateY(-5deg) scale(1.05); }
+        @media (hover: hover) { .book-shelf-item:hover .book-3d-vertical { transform: rotateY(-5deg) scale(1.05); } .book-shelf-item:hover .click-hint { opacity: 1; } }
+        .click-hint { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); background: rgba(197,160,89,.9); color: #000; padding: 5px 10px; font-size: .7rem; font-weight: 800; border-radius: 4px; opacity: 0; transition: .3s; pointer-events: none; z-index: 10; white-space: nowrap; }
+        .shelf-title { color: var(--gold); font-size: 10px; margin-top: .5rem; font-weight: 700; text-transform: uppercase; padding: 0 4px; }
         .shelf-stats { font-size: 11px; color: #aaa; margin-top: 4px; display: flex; justify-content: center; gap: 10px; }
+        .skeleton { background: linear-gradient(90deg, #151515 25%, #222 37%, #151515 63%); background-size: 400% 100%; animation: shimmer 1.4s infinite; border-radius: 4px; }
+        .skeleton.book { width: var(--bw); height: calc(var(--bw) * 1.43); margin: 0 auto; }
+        .skeleton.line { height: 10px; width: 60%; margin: 10px auto 0; }
+        @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+        .empty-state { grid-column: 1 / -1; color: #888; padding: 3rem 1rem; }
 
-        #flipbookOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); display: none; align-items: center; justify-content: center; z-index: 5000; padding: 10px; }
-        @media(min-width: 576px) { #flipbookOverlay { padding: 20px; } }
-        .close-btn { position: fixed; top: 10px; right: 20px; color: var(--gold); cursor: pointer; font-size: 2.5rem; z-index: 9999; line-height: 1; }
-        
-        .book-container { width: 100%; max-width: 480px; height: 85vh; max-height: 750px; position: relative; perspective: 3000px; }
-        .page { width: 100%; height: 100%; position: absolute; top: 0; left: 0; padding: 20px; transform-origin: left center; transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1); backface-visibility: hidden; border: 1px solid #ccc; overflow-y: auto; cursor: pointer; box-sizing: border-box; }
-        
-        @media (min-width: 576px) { .page { padding: 35px; } }
-        @media (min-width: 768px) { .page { padding: 45px; } }
-        
+        /* ============ READER OVERLAY ============ */
+        #flipbookOverlay { position: fixed; inset: 0; background: rgba(0,0,0,.98); display: none; flex-direction: column; align-items: center; z-index: 5000; padding: calc(10px + var(--safe-t)) calc(10px + var(--safe-r)) calc(8px + var(--safe-b)) calc(10px + var(--safe-l)); }
+        #flipbookOverlay.open { display: flex; animation: fadeIn .25s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .close-btn { position: absolute; top: calc(6px + var(--safe-t)); right: calc(14px + var(--safe-r)); color: var(--gold); cursor: pointer; font-size: 2.4rem; z-index: 9999; line-height: 1; background: none; border: 0; padding: 0 6px; }
+        .book-stage { flex: 1 1 auto; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center; padding-top: 26px; }
+        .book-container { width: min(100%, 480px); height: 100%; max-height: 760px; position: relative; perspective: 3000px; touch-action: pan-y; }
+        @media (min-width: 992px) { .book-container { width: min(100%, 520px); } }
+        .page { width: 100%; height: 100%; position: absolute; top: 0; left: 0; padding: clamp(16px, 5cqi, 45px); transform-origin: left center; transition: transform .8s cubic-bezier(.645,.045,.355,1); backface-visibility: hidden; -webkit-backface-visibility: hidden; border: 1px solid #ccc; overflow-y: auto; box-sizing: border-box; container-type: inline-size; overscroll-behavior: contain; font-size: clamp(.82rem, 3.4cqi, 1rem); }
+        .page-1 { cursor: pointer; }
         .page.light-mode { background: var(--ivory); color: var(--ink); }
         .page.dark-mode { background: #1a1a1a; color: #eee; border-color: #444; }
+        .page.dark-mode .btn-outline-secondary { color: #ddd; border-color: #777; }
+        .page.dark-mode .text-muted { color: #aaa !important; }
         .page-1 { z-index: 30; } .page-2 { z-index: 20; } .page-3 { z-index: 10; }
-        .flipped { transform: rotateY(-180deg); z-index: 1 !important; }
-        .label-gold { font-size: 0.75rem; font-weight: 800; color: var(--gold); text-transform: uppercase; border-bottom: 2px solid var(--gold); margin: 15px 0 8px; display: block; letter-spacing: 1px; }
-        .youtube-btn { background: #ff0000; color: white !important; padding: 10px; border-radius: 5px; text-decoration: none; display: block; text-align: center; font-weight: bold; font-size: 0.82rem; margin-top: 15px; }
-        .admin-fab { position: fixed; bottom: 20px; right: 20px; background: var(--gold); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 1.2rem; }
-        @media(min-width: 768px) { .admin-fab { bottom: 30px; right: 30px; width: 60px; height: 60px; font-size: 1.5rem; } }
-        
-        .tap-hint { font-size: 0.65rem; color: var(--gold); text-align: center; display: block; letter-spacing: 2px; margin-top: 10px; font-weight: bold; text-transform: uppercase; opacity: 0.7; }
+        .flipped { transform: rotateY(-180deg); z-index: 1 !important; pointer-events: none; }
+        .label-gold { font-size: .75em; font-weight: 800; color: var(--gold); text-transform: uppercase; border-bottom: 2px solid var(--gold); margin: 15px 0 8px; display: block; letter-spacing: 1px; }
+        .page h3 { font-family: 'Cinzel', serif; font-size: 1.4em; margin-bottom: 5px; overflow-wrap: anywhere; }
+        .youtube-btn { background: #ff0000; color: #fff !important; padding: 10px; border-radius: 5px; text-decoration: none; display: block; text-align: center; font-weight: bold; font-size: .85em; }
+        .youtube-btn.disabled { background: #888; pointer-events: none; }
+        .tap-hint { font-size: .68em; color: var(--gold); text-align: center; display: block; width: 100%; letter-spacing: 2px; margin-top: 10px; font-weight: bold; text-transform: uppercase; opacity: .85; background: none; border: 0; padding: 6px; }
+        .rich { line-height: 1.6; overflow-wrap: anywhere; }
+        .rich .ql-align-center { text-align: center; } .rich .ql-align-right { text-align: right; } .rich .ql-align-justify { text-align: justify; }
+        .rich blockquote { border-left: 3px solid var(--gold); padding-left: 10px; margin: .6em 0; font-style: italic; }
+        .rich a { color: #0d6efd; }
+        .reader-bar { flex: 0 0 auto; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: center; margin-top: 8px; padding: 6px 10px; border: 1px solid var(--gold-soft); border-radius: 40px; background: rgba(20,20,20,.9); }
+        .reader-bar .icon-btn { font-size: .95rem; min-width: 38px; min-height: 38px; }
+        .reader-bar .pager { color: #ccc; font-size: .75rem; min-width: 38px; text-align: center; }
+        @media (max-height: 520px) and (orientation: landscape) { .book-stage { padding-top: 0; } .book-container { max-height: none; } .reader-bar { padding: 2px 8px; } .reader-bar .icon-btn { min-height: 30px; } }
+
+        /* ============ MODALS / TOASTS ============ */
+        .modal { z-index: 6000; } .modal-backdrop { z-index: 5990; }
+        .modal-content { color: #222; }
+        .share-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+        #toastBox { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + var(--safe-b)); z-index: 9000; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; width: min(92vw, 420px); }
+        .toast-msg { background: #151515; color: #fff; border: 1px solid var(--gold); padding: 10px 16px; border-radius: 30px; font-size: .82rem; box-shadow: 0 6px 24px rgba(0,0,0,.5); animation: toastIn .3s ease; text-align: center; }
+        .toast-msg.err { border-color: #dc3545; }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+        #offlineBar { display: none; background: #5c3b00; color: #ffd48a; text-align: center; font-size: .75rem; padding: 4px; }
+        body.offline #offlineBar { display: block; }
+        .admin-fab { position: fixed; bottom: calc(20px + var(--safe-b)); right: calc(20px + var(--safe-r)); background: var(--gold); width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2000; box-shadow: 0 4px 15px rgba(0,0,0,.3); font-size: 1.3rem; border: 0; }
+        @media (min-width: 768px) { .admin-fab { bottom: 30px; right: 30px; width: 60px; height: 60px; font-size: 1.5rem; } }
+        #coverPreview { max-height: 110px; border-radius: 4px; margin-top: 6px; display: none; }
+
+        /* Hide Google Translate chrome */
+        .goog-te-banner-frame, .skiptranslate iframe, #goog-gt-tt, .goog-te-balloon-frame { display: none !important; }
+        body { top: 0 !important; }
+
+        /* ============ EXPORT / PRINT DOCUMENT ============ */
+        #printRoot { display: none; }
+        #pdfStage { position: fixed; left: -12000px; top: 0; }
+        .doc-root { width: var(--cw, 186mm); background: #fff; color: #1a1a1a; font-family: 'Montserrat', sans-serif; box-sizing: border-box; }
+        .doc-root * { box-sizing: border-box; }
+        .doc-cover { min-height: var(--ch, 270mm); border: 12px solid #c5a059; padding: 14mm 10mm; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; page-break-after: always; break-after: page; }
+        .doc-brand { font-family: 'Cinzel', serif; color: #c5a059; letter-spacing: 5px; border-bottom: 2px solid #c5a059; padding-bottom: 5px; margin-bottom: 9mm; font-size: 20px; font-weight: 700; }
+        .doc-cover-img { width: 78mm; height: 107mm; border: 4px double #c5a059; padding: 4px; background: #fafafa; }
+        .doc-cover-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .doc-cover h1 { font-family: 'Cinzel', serif; font-size: 24pt; margin: 9mm 0 2mm; text-transform: uppercase; color: #1a1a1a; overflow-wrap: anywhere; }
+        .doc-cover h2 { font-weight: 400; color: #444; font-size: 14pt; margin: 0; }
+        .doc-cover p { margin-top: 9mm; font-weight: 600; letter-spacing: 1px; color: #666; font-size: 10pt; }
+        .doc-sec { padding: 4mm 6mm 4mm 8mm; border-left: 3px solid #c5a059; margin-bottom: 6mm; }
+        .doc-sec.brk { page-break-after: always; break-after: page; }
+        .doc-sec h2 { font-family: 'Cinzel', serif; color: #c5a059; font-size: 16pt; margin: 0 0 5mm; }
+        .doc-sec .rich { text-align: justify; font-size: 11.5pt; line-height: 1.75; color: #222; }
+        .doc-verse { margin-bottom: 5mm; page-break-inside: avoid; break-inside: avoid; }
+        .doc-verse strong { font-size: 11pt; } .doc-verse span { display: block; color: #444; font-style: italic; font-size: 10.5pt; line-height: 1.5; margin-top: 1mm; }
+        .doc-qr { border: 2px dashed #c5a059; padding: 4mm; text-align: center; background: #fafafa; page-break-inside: avoid; break-inside: avoid; margin-top: 8mm; }
+        .doc-qr h4 { font-family: 'Cinzel', serif; margin: 0; font-size: 10pt; color: #c5a059; letter-spacing: 1px; }
+        .doc-qr img { width: 24mm; margin: 3mm 0; } .doc-qr p { font-size: 8pt; color: #c00; font-weight: 700; word-break: break-all; margin: 0; }
+        .doc-foot { font-size: 8pt; color: #888; text-align: center; margin-top: 6mm; }
+        .doc-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+        .doc-table th { background: #c5a059; color: #fff; text-align: left; padding: 6px; }
+        .doc-table td { border-bottom: 1px solid #ddd; padding: 6px; vertical-align: top; }
+        .doc-table tr { page-break-inside: avoid; }
+
+        @media print {
+            body > *:not(#printRoot) { display: none !important; }
+            body { background: #fff !important; color: #000; padding: 0; }
+            #printRoot { display: block !important; }
+            .doc-root { width: 100%; }
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+        }
     </style>
 </head>
 <body>
+<a class="skip-link" href="#mainGrid">Skip to archive</a>
+<div id="offlineBar" role="status">You are offline — showing cached data. Changes will sync when you reconnect.</div>
 
 <header class="glass-nav">
-    <a href="#" class="archive-logo notranslate">KINGDOM COME</a>
+    <a href="#" class="archive-logo notranslate" aria-label="Kingdom Come home">KINGDOM COME</a>
     <div class="nav-right">
-        <select class="lang-select" id="langSelect" onchange="changeLang(this.value)">
+        <select class="lang-select" id="langSelect" aria-label="Language" onchange="changeLang(this.value)">
             <option value="en">English</option><option value="fr">Français</option><option value="sw">Kiswahili</option><option value="es">Español</option>
         </select>
-        <button class="btn btn-sm text-warning px-1 px-sm-2" onclick="toggleBookTheme()">🌓</button>
+        <button class="icon-btn" onclick="toggleBookTheme()" aria-label="Toggle reading theme" title="Toggle reading theme">🌓</button>
+        <div class="dropdown">
+            <button class="icon-btn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Archive export menu" title="Export archive">⬇</button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><h6 class="dropdown-header">Archive</h6></li>
+                <li><button class="dropdown-item" onclick="exportArchiveJSON()">Export all (JSON backup)</button></li>
+                <li><button class="dropdown-item" onclick="exportArchiveCSV()">Export all (CSV / Excel)</button></li>
+                <li><button class="dropdown-item" onclick="printCatalog()">Print catalog</button></li>
+                <li class="admin-only" style="display:none"><label class="dropdown-item mb-0" style="cursor:pointer">Import JSON…<input type="file" id="importFile" accept="application/json" hidden></label></li>
+                <li><hr class="dropdown-divider"></li>
+                <li class="px-3 pb-1"><label class="small d-block mb-1">Paper size</label>
+                    <select id="paperSelect" class="form-select form-select-sm" onchange="setPaper(this.value)"><option value="a4">A4</option><option value="letter">US Letter</option></select></li>
+            </ul>
+        </div>
         <div id="adminControls" style="display:none; align-items:center; gap:5px;">
             <span id="userEmailDisplay" class="small text-warning d-none d-lg-inline"></span>
             <button class="btn btn-sm btn-light fw-bold py-0 px-2" onclick="openForm()">+ ADD</button>
@@ -84,75 +202,147 @@
     </div>
 </header>
 
-<div class="container text-center pt-4 px-3">
-    <input type="text" id="smartSearch" class="form-control mb-4 mx-auto" style="max-width:500px; background:rgba(255,255,255,0.05); color:#fff; border-radius:30px; border:1px solid var(--gold);" oninput="applyFilter()" placeholder="Search Archives...">
-    <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3 g-md-4" id="mainGrid"></div>
-</div>
+<main class="container text-center pt-4 px-3">
+    <div class="archive-toolbar">
+        <input type="search" id="smartSearch" class="form-control" placeholder="Search title, preacher, venue, scripture…" aria-label="Search archives" autocomplete="off">
+        <select id="sortSelect" class="form-select" aria-label="Sort sermons">
+            <option value="date-desc">Newest first</option><option value="date-asc">Oldest first</option>
+            <option value="title">Title A–Z</option><option value="likes">Most liked</option><option value="views">Most viewed</option>
+        </select>
+    </div>
+    <div class="archive-stats" id="archiveStats" aria-live="polite"></div>
+    <div class="shelf-grid" id="mainGrid" role="list"></div>
+</main>
 
-<div id="flipbookOverlay">
-    <div class="close-btn" onclick="closeBook()">&times;</div>
-    <div class="book-container">
-        <div class="page page-1 light-mode" id="p1" onclick="flipPage(1)">
-            <div id="viewImg" style="height:calc(100% - 25px); pointer-events:none; border: 4px double var(--gold); padding: 4px; box-sizing: border-box;"></div>
-            <span class="tap-hint">Tap Cover To Open</span>
-        </div>
-        <div class="page page-2 light-mode" id="p2" onclick="flipPage(2)">
-            <span class="label-gold">Sermon Details</span>
-            <h3 id="viewTitle" style="font-family:'Cinzel'; font-size:1.35rem; margin-bottom:5px;"></h3>
-            <div id="viewMeta" class="small mt-2" style="font-size:0.85rem;"></div>
-            
-            <div class="d-flex align-items-center justify-content-between mt-2 px-1" onclick="event.stopPropagation()">
-                <button class="btn btn-sm btn-outline-secondary" id="likeBtn" onclick="likeSermon()">❤️ <span id="likeCount">0</span> Likes</button>
-                <span class="small text-muted">👁️ <span id="viewCount">0</span> Views</span>
+<!-- READER -->
+<div id="flipbookOverlay" role="dialog" aria-modal="true" aria-label="Sermon reader">
+    <button class="close-btn" id="closeBtn" onclick="closeBook()" aria-label="Close">&times;</button>
+    <div class="book-stage">
+        <div class="book-container" id="bookContainer">
+            <div class="page page-1 light-mode" id="p1" onclick="setPage(1)">
+                <div id="viewImg" style="height:calc(100% - 28px); pointer-events:none; border:4px double var(--gold); padding:4px; box-sizing:border-box;"></div>
+                <span class="tap-hint">Tap Cover To Open</span>
             </div>
-
-            <span class="label-gold">YouTube</span>
-            <div class="d-flex align-items-center gap-3 my-2">
-                <div id="qrBox" class="text-center bg-white p-1 d-inline-block" style="border:1px solid #ccc;"></div>
-                <a id="viewYT" href="#" target="_blank" class="youtube-btn flex-grow-1 m-0" onclick="event.stopPropagation()">WATCH VIDEO</a>
-            </div>
-            <span class="label-gold">Scriptures</span>
-            <div id="viewVerses" class="small" style="font-size:0.85rem;"></div>
-            <div id="adminCrudPanel" style="display:none;" class="mt-3 pt-2 border-top" onclick="event.stopPropagation()">
-                <div class="row g-2">
-                    <div class="col-6"><button class="btn btn-dark w-100 btn-sm fw-bold" onclick="editCurrent()">EDIT</button></div>
-                    <div class="col-6"><button class="btn btn-outline-danger w-100 btn-sm fw-bold" onclick="deleteCurrent()">DELETE</button></div>
+            <div class="page page-2 light-mode" id="p2">
+                <span class="label-gold">Sermon Details</span>
+                <h3 id="viewTitle"></h3>
+                <div id="viewMeta" class="mt-2" style="font-size:.9em;"></div>
+                <div class="d-flex align-items-center justify-content-between mt-2 px-1">
+                    <button class="btn btn-sm btn-outline-secondary" id="likeBtn" onclick="likeSermon()" aria-pressed="false">❤️ <span id="likeCount">0</span> Likes</button>
+                    <span class="small text-muted">👁️ <span id="viewCount">0</span> Views</span>
                 </div>
+                <span class="label-gold">YouTube</span>
+                <div class="d-flex align-items-center gap-3 my-2">
+                    <div id="qrBox" class="text-center bg-white p-1 d-inline-block" style="border:1px solid #ccc;"></div>
+                    <a id="viewYT" href="#" target="_blank" rel="noopener noreferrer" class="youtube-btn flex-grow-1 m-0">WATCH VIDEO</a>
+                </div>
+                <span class="label-gold">Scriptures</span>
+                <div id="viewVerses" style="font-size:.9em;"></div>
+                <div id="adminCrudPanel" style="display:none;" class="mt-3 pt-2 border-top">
+                    <div class="row g-2">
+                        <div class="col-6"><button class="btn btn-dark w-100 btn-sm fw-bold" onclick="editCurrent()">EDIT</button></div>
+                        <div class="col-6"><button class="btn btn-outline-danger w-100 btn-sm fw-bold" onclick="deleteCurrent()">DELETE</button></div>
+                    </div>
+                </div>
+                <button class="tap-hint" onclick="setPage(2)">Tap To View Executive Summary ›</button>
             </div>
-            <span class="tap-hint">Tap To View Executive Summary</span>
+            <div class="page page-3 light-mode" id="p3">
+                <span class="label-gold">Executive Summary</span>
+                <div id="viewSummary" class="rich"></div>
+                <div class="small text-muted mt-2" id="readTime"></div>
+                <hr class="my-3">
+                <button onclick="exportFullPDF()" class="btn w-100 fw-bold py-2 text-white" style="background:var(--gold); font-size:.85rem;">DOWNLOAD MASTER PDF</button>
+                <div class="row g-2 mt-1">
+                    <div class="col-6"><button class="btn btn-outline-secondary btn-sm w-100" onclick="printEntry()">🖨 Print</button></div>
+                    <div class="col-6"><button class="btn btn-outline-secondary btn-sm w-100" onclick="shareSermon()">↗ Share</button></div>
+                </div>
+                <button class="tap-hint" onclick="setPage(0)">Tap To Close Document</button>
+            </div>
         </div>
-        <div class="page page-3 light-mode" id="p3" onclick="flipPage(3)">
-            <span class="label-gold">Executive Summary</span>
-            <div id="viewSummary" style="line-height: 1.6; font-size: 0.9rem;"></div>
-            <hr class="my-3">
-            <button onclick="event.stopPropagation(); exportFullPDF();" class="btn btn-gold w-100 fw-bold py-2 text-white" style="background:var(--gold); font-size:0.85rem;">DOWNLOAD MASTER PDF</button>
-            <span class="tap-hint">Tap To Close Document</span>
+    </div>
+    <div class="reader-bar" role="toolbar" aria-label="Reader controls">
+        <button class="icon-btn" onclick="setPage(curPage-1)" aria-label="Previous page">◀</button>
+        <span class="pager" id="pager" aria-live="polite">1 / 3</span>
+        <button class="icon-btn" onclick="setPage(curPage+1)" aria-label="Next page">▶</button>
+        <button class="icon-btn" onclick="shareSermon()" aria-label="Share" title="Share">↗</button>
+        <button class="icon-btn" onclick="printEntry()" aria-label="Print" title="Print">🖨</button>
+        <button class="icon-btn" onclick="exportFullPDF()" aria-label="Download PDF" title="Download PDF">📄</button>
+        <div class="dropup">
+            <button class="icon-btn" data-bs-toggle="dropdown" aria-label="More export options" title="More">⋯</button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><button class="dropdown-item" onclick="sharePDF()">Share as PDF file</button></li>
+                <li><button class="dropdown-item" onclick="exportText()">Download as Text (.txt)</button></li>
+                <li><button class="dropdown-item" onclick="exportMarkdown()">Download as Markdown (.md)</button></li>
+                <li><button class="dropdown-item" onclick="exportEntryJSON()">Download as JSON</button></li>
+                <li><button class="dropdown-item" onclick="downloadICS()">Add to calendar (.ics)</button></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><button class="dropdown-item" onclick="copyLink()">Copy link</button></li>
+                <li><button class="dropdown-item" onclick="copySummary()">Copy summary text</button></li>
+            </ul>
         </div>
+        <button class="icon-btn" onclick="toggleBookTheme()" aria-label="Toggle theme">🌓</button>
+        <button class="icon-btn" id="soundBtn" onclick="toggleSound()" aria-label="Toggle page sound" title="Page sound">🔊</button>
     </div>
 </div>
 
-<div class="modal fade" id="editorModal" tabindex="-1">
-    <div class="modal-dialog modal-lg text-dark">
+<!-- EDITOR -->
+<div class="modal fade" id="editorModal" tabindex="-1" aria-labelledby="editorTitle">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
         <div class="modal-content p-3 p-md-4">
+            <h5 id="editorTitle" class="mb-3">Sermon Entry</h5>
             <form id="editorForm">
                 <input type="hidden" id="editId">
                 <div class="row g-2 g-md-3">
-                    <div class="col-md-6"><label class="small fw-bold">Theme</label><input type="text" id="fTitle" class="form-control form-control-sm" required></div>
-                    <div class="col-md-6"><label class="small fw-bold">Preacher</label><input type="text" id="fSpeaker" class="form-control form-control-sm" required></div>
-                    <div class="col-md-4"><label class="small fw-bold">Date</label><input type="text" id="fDate" class="form-control form-control-sm" placeholder="YYYY-MM-DD"></div>
-                    <div class="col-md-8"><label class="small fw-bold">Venue</label><input type="text" id="fVenue" class="form-control form-control-sm"></div>
-                    <div class="col-12"><label class="small fw-bold">YouTube URL</label><input type="url" id="fLink" class="form-control form-control-sm"></div>
-                    <div class="col-12"><label class="small fw-bold">Cover Image</label><input type="file" id="fileIn" class="form-control form-control-sm" accept="image/*"></div>
-                    <div class="col-12"><label class="small fw-bold">Executive Summary</label><div id="quill-editor" style="height:150px;"></div></div>
-                    <div class="col-12"><div id="verseContainer"></div><button type="button" class="btn btn-sm btn-link p-0 text-decoration-none fw-bold" onclick="addVerseLine()">+ Add Scripture</button></div>
+                    <div class="col-md-6"><label class="small fw-bold" for="fTitle">Theme</label><input type="text" id="fTitle" class="form-control form-control-sm" required maxlength="160"></div>
+                    <div class="col-md-6"><label class="small fw-bold" for="fSpeaker">Preacher</label><input type="text" id="fSpeaker" class="form-control form-control-sm" required maxlength="120"></div>
+                    <div class="col-md-4"><label class="small fw-bold" for="fDate">Date</label><input type="date" id="fDate" class="form-control form-control-sm"></div>
+                    <div class="col-md-8"><label class="small fw-bold" for="fVenue">Venue</label><input type="text" id="fVenue" class="form-control form-control-sm" maxlength="160"></div>
+                    <div class="col-12"><label class="small fw-bold" for="fLink">YouTube URL</label><input type="url" id="fLink" class="form-control form-control-sm" placeholder="https://youtu.be/…"></div>
+                    <div class="col-12"><label class="small fw-bold" for="fileIn">Cover Image</label><input type="file" id="fileIn" class="form-control form-control-sm" accept="image/*"><img id="coverPreview" alt="Cover preview"></div>
+                    <div class="col-12"><label class="small fw-bold">Executive Summary</label><div id="quill-editor" style="height:170px;"></div></div>
+                    <div class="col-12">
+                        <div class="d-flex align-items-center justify-content-between mb-1"><label class="small fw-bold">Scriptures</label>
+                            <select id="bibleTr" class="form-select form-select-sm w-auto" aria-label="Bible translation"><option value="kjv">KJV</option><option value="web">WEB</option><option value="bbe">BBE</option></select></div>
+                        <div id="verseContainer"></div>
+                        <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none fw-bold" onclick="addVerseLine()">+ Add Scripture</button>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-warning w-100 mt-3 fw-bold btn-sm">SAVE TO CLOUD ARCHIVE</button>
+                <button type="submit" id="saveBtn" class="btn btn-warning w-100 mt-3 fw-bold btn-sm">SAVE TO CLOUD ARCHIVE</button>
             </form>
         </div>
     </div>
 </div>
 
-<div class="admin-fab" onclick="loginFirebase()">🔑</div>
+<!-- LOGIN -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginTitle">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <form class="modal-content p-3" id="loginForm">
+            <h5 id="loginTitle" class="mb-3">Admin Sign-in</h5>
+            <input type="email" id="loginEmail" class="form-control mb-2" placeholder="Admin email" autocomplete="username" required>
+            <div class="input-group mb-2"><input type="password" id="loginPass" class="form-control" placeholder="Password" autocomplete="current-password" required>
+                <button type="button" class="btn btn-outline-secondary" onclick="const i=$('#loginPass');i.type=i.type==='password'?'text':'password'" aria-label="Show password">👁</button></div>
+            <div id="loginErr" class="text-danger small mb-2" role="alert"></div>
+            <button class="btn btn-warning fw-bold w-100" type="submit">SIGN IN</button>
+        </form>
+    </div>
+</div>
+
+<!-- SHARE -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareTitle">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content p-3">
+            <h5 id="shareTitle" class="mb-3">Share this sermon</h5>
+            <div class="input-group mb-3"><input id="shareUrl" class="form-control form-control-sm" readonly aria-label="Link"><button class="btn btn-sm btn-dark" onclick="copyLink()">Copy</button></div>
+            <div class="share-grid" id="shareGrid"></div>
+        </div>
+    </div>
+</div>
+
+<div id="toastBox" aria-live="polite"></div>
+<button class="admin-fab" id="adminFab" onclick="openLogin()" aria-label="Admin sign-in">🔑</button>
+<div id="printRoot" class="doc-root"></div>
+<div id="pdfStage"></div>
+<div id="google_translate_element" style="display:none"></div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -163,6 +353,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <script>
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement({ pageLanguage: 'en', includedLanguages: 'en,fr,sw,es', autoDisplay: false }, 'google_translate_element');
+    }
+</script>
+<script async src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+<script>
+    /* ================= FIREBASE ================= */
     const firebaseConfig = {
         apiKey: "AIzaSyD_Hppu10o_N3wxe3ZVjSPtackyqtXaHbg",
         authDomain: "scroll-53da4.firebaseapp.com",
@@ -172,289 +370,537 @@
         appId: "1:177345990172:web:f82625a7a9b4059fd019d9",
         measurementId: "G-6745ME93LF"
     };
-
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+    db.enablePersistence({ synchronizeTabs: true }).catch(() => { /* multi-tab / unsupported: ignore */ });
 
+    /* ================= HELPERS ================= */
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const store = {
+        get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+        set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { } },
+        del(k) { try { localStorage.removeItem(k); } catch { } }
+    };
+
+    const ALLOWED = new Set(['P','BR','STRONG','B','EM','I','U','S','UL','OL','LI','BLOCKQUOTE','H1','H2','H3','H4','A','SPAN','SUB','SUP','HR','PRE','CODE','DIV']);
+    const DROP = new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','NOSCRIPT','TEMPLATE','SVG','MATH','LINK','META','FORM','INPUT','BUTTON','TEXTAREA','SELECT']);
+    function sanitize(html) {
+        const doc = new DOMParser().parseFromString('<body>' + (html || '') + '</body>', 'text/html');
+        (function walk(node) {
+            [...node.childNodes].forEach(ch => {
+                if (ch.nodeType === 3) return;
+                if (ch.nodeType !== 1) { ch.remove(); return; }
+                if (DROP.has(ch.tagName)) { ch.remove(); return; }
+                if (!ALLOWED.has(ch.tagName)) { walk(ch); ch.replaceWith(...ch.childNodes); return; }
+                [...ch.attributes].forEach(a => {
+                    const n = a.name.toLowerCase();
+                    if (n === 'href' && ch.tagName === 'A' && /^(https?:|mailto:)/i.test(a.value.trim())) return;
+                    if (n === 'class') { const k = a.value.split(/\s+/).filter(c => /^ql-[a-z]+-?[a-z0-9]*$/.test(c)); if (k.length) { ch.setAttribute('class', k.join(' ')); return; } }
+                    ch.removeAttribute(a.name);
+                });
+                if (ch.tagName === 'A') { ch.setAttribute('target', '_blank'); ch.setAttribute('rel', 'noopener noreferrer'); }
+                walk(ch);
+            });
+        })(doc.body);
+        return doc.body.innerHTML;
+    }
+    function htmlToText(html) {
+        const d = new DOMParser().parseFromString('<body>' + sanitize(html) + '</body>', 'text/html');
+        $$('br', d).forEach(b => b.replaceWith('\n'));
+        $$('li', d).forEach(l => l.prepend('• '));
+        $$('p,div,li,h1,h2,h3,h4,blockquote,pre', d).forEach(e => e.append('\n'));
+        return d.body.textContent.replace(/\n{3,}/g, '\n\n').trim();
+    }
+    function htmlToMd(html) {
+        const d = new DOMParser().parseFromString('<body>' + sanitize(html) + '</body>', 'text/html');
+        const conv = n => {
+            if (n.nodeType === 3) return n.textContent;
+            if (n.nodeType !== 1) return '';
+            const inner = [...n.childNodes].map(conv).join('');
+            switch (n.tagName) {
+                case 'STRONG': case 'B': return `**${inner}**`;
+                case 'EM': case 'I': return `*${inner}*`;
+                case 'S': return `~~${inner}~~`;
+                case 'CODE': return '`' + inner + '`';
+                case 'H1': return `\n# ${inner}\n\n`; case 'H2': return `\n## ${inner}\n\n`; case 'H3': case 'H4': return `\n### ${inner}\n\n`;
+                case 'A': return `[${inner}](${n.getAttribute('href') || ''})`;
+                case 'BR': return '\n';
+                case 'LI': return (n.parentNode.tagName === 'OL' ? '1. ' : '- ') + inner.trim() + '\n';
+                case 'UL': case 'OL': return '\n' + inner + '\n';
+                case 'BLOCKQUOTE': return '\n' + inner.trim().split('\n').map(l => '> ' + l).join('\n') + '\n\n';
+                case 'P': case 'DIV': case 'PRE': return inner + '\n\n';
+                default: return inner;
+            }
+        };
+        return conv(d.body).replace(/\n{3,}/g, '\n\n').trim();
+    }
+    const fmtDate = s => { const d = new Date(s + 'T00:00:00'); return isNaN(d) ? (s || '') : new Intl.DateTimeFormat(undefined, { dateStyle: 'long' }).format(d); };
+    const safeName = s => String(s || 'sermon').replace(/[^\w\u00C0-\u024F\- ]+/g, '').trim().replace(/\s+/g, '_').slice(0, 60) || 'sermon';
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+
+    function toast(msg, err = false, ms = 3200) {
+        const t = document.createElement('div'); t.className = 'toast-msg' + (err ? ' err' : ''); t.textContent = msg; t.setAttribute('role', err ? 'alert' : 'status');
+        $('#toastBox').appendChild(t); setTimeout(() => t.remove(), ms);
+    }
+    function download(blob, filename) {
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click();
+        setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    }
+    async function copyText(t, okMsg = 'Copied') {
+        try { await navigator.clipboard.writeText(t); }
+        catch { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch { } ta.remove(); }
+        toast(okMsg);
+    }
+    function qrDataUrl(text, size = 140) {
+        const box = document.createElement('div');
+        try { new QRCode(box, { text, width: size, height: size, correctLevel: QRCode.CorrectLevel.M }); const c = box.querySelector('canvas'); return c ? c.toDataURL('image/png') : (box.querySelector('img')?.src || ''); } catch { return ''; }
+    }
+
+    /* ================= STATE ================= */
     let archive = [];
-    let currentImgBase64 = "";
+    let currentImgBase64 = '';
     let isAuthorized = false;
     let activeEntry = null;
-    const quill = new Quill('#quill-editor', { theme: 'snow' });
+    let curPage = 0;
+    let pendingId = null;
+    let unsubscribe = null;
+    let lastFocus = null;
+    let soundOn = store.get('sound', true);
+    let paper = store.get('paper', 'a4');
+    const quill = new Quill('#quill-editor', { theme: 'snow', modules: { toolbar: [[{ header: [1, 2, 3, false] }], ['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }], ['blockquote', 'link'], [{ align: [] }], ['clean']] } });
+    const PAPER = { a4: { cw: '186mm', ch: '270mm', fmt: 'a4', css: 'A4' }, letter: { cw: '191mm', ch: '253mm', fmt: 'letter', css: 'Letter' } };
 
-    // Built-in synthetic audio generation to resolve NotSupportedError completely
+    /* ================= AUDIO ================= */
+    let audioCtx;
     function playFlipSound() {
+        if (!soundOn || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
         try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
+            audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+            const ctx = audioCtx, osc = ctx.createOscillator(), gain = ctx.createGain();
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(120, ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.15);
-            gain.gain.setValueAtTime(0.2, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.15);
-        } catch(e) { console.log("Audio contextual note ignored"); }
+            osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + .15);
+            gain.gain.setValueAtTime(.2, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(.01, ctx.currentTime + .15);
+            osc.connect(gain); gain.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + .15);
+        } catch (e) { /* audio unavailable */ }
     }
+    function toggleSound() { soundOn = !soundOn; store.set('sound', soundOn); $('#soundBtn').textContent = soundOn ? '🔊' : '🔇'; }
 
-    function loginFirebase() {
-        const email = prompt("Enter Admin Email:");
-        const pass = prompt("Enter Password:");
-        if(email && pass) { auth.signInWithEmailAndPassword(email, pass).catch(err => alert("Login Failed: " + err.message)); }
-    }
-
-    function logoutFirebase() { auth.signOut(); localStorage.removeItem('local_archive'); location.reload(); }
+    /* ================= AUTH ================= */
+    function openLogin() { $('#loginErr').textContent = ''; new bootstrap.Modal('#loginModal').show(); setTimeout(() => $('#loginEmail').focus(), 400); }
+    $('#loginForm').onsubmit = async e => {
+        e.preventDefault();
+        try {
+            await auth.signInWithEmailAndPassword($('#loginEmail').value.trim(), $('#loginPass').value);
+            bootstrap.Modal.getInstance($('#loginModal'))?.hide(); $('#loginPass').value = ''; toast('Signed in');
+        } catch (err) { $('#loginErr').textContent = 'Login failed: ' + err.message; }
+    };
+    function logoutFirebase() { auth.signOut().then(() => { store.del('local_archive'); location.reload(); }); }
 
     auth.onAuthStateChanged(user => {
         isAuthorized = !!user;
-        if (user) {
-            document.getElementById('adminControls').style.setProperty("display", "flex", "important");
-            document.getElementById('userEmailDisplay').innerText = user.email;
-        }
-        loadCachedData();
-        syncFromCloud();
+        $('#adminControls').style.setProperty('display', user ? 'flex' : 'none', 'important');
+        $$('.admin-only').forEach(el => el.style.display = user ? '' : 'none');
+        $('#adminFab').style.display = user ? 'none' : 'flex';
+        if (user) $('#userEmailDisplay').innerText = user.email;
+        $('#adminCrudPanel').style.display = (user && activeEntry) ? 'block' : 'none';
+        if (!unsubscribe) { loadCachedData(); syncFromCloud(); }
     });
 
+    /* ================= DATA ================= */
     function loadCachedData() {
-        try {
-            const cached = localStorage.getItem('local_archive');
-            if (cached) {
-                archive = JSON.parse(cached);
-                renderShelf();
-            }
-        } catch (e) {
-            console.error("Failed to parse local cache data", e);
-        }
+        const cached = store.get('local_archive', null);
+        if (Array.isArray(cached) && cached.length) { archive = cached; renderShelf(); } else renderSkeleton();
     }
-
-    async function syncFromCloud() {
-        db.collection("sermons").orderBy("date", "desc").onSnapshot(snap => {
+    function syncFromCloud() {
+        unsubscribe = db.collection('sermons').orderBy('date', 'desc').onSnapshot(snap => {
             archive = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            try {
-                const strippedArchive = archive.map(item => {
-                    const copy = { ...item };
-                    if (copy.img && copy.img.startsWith('data:image')) {
-                        copy.img = ""; 
-                    }
-                    return copy;
-                });
-                localStorage.setItem('local_archive', JSON.stringify(strippedArchive));
-            } catch (storageError) {
-                console.warn("Storage quota exceeded. Clearing cache.", storageError);
-                localStorage.removeItem('local_archive');
-            }
-            
-            renderShelf();
-            if(activeEntry) {
+            try { store.set('local_archive', archive.map(i => ({ ...i, img: (i.img || '').startsWith('data:image') ? '' : i.img }))); }
+            catch { store.del('local_archive'); }
+            applyFilter();
+            if (activeEntry) {
                 const fresh = archive.find(x => x.id === activeEntry.id);
-                if(fresh) {
-                    document.getElementById('likeCount').innerText = fresh.likes || 0;
-                    document.getElementById('viewCount').innerText = fresh.views || 0;
-                }
+                if (fresh) { activeEntry = fresh; refreshCounts(); } else if ($('#flipbookOverlay').classList.contains('open')) { hideBook(); toast('This sermon was removed', true); }
             }
-        }, err => {
-            console.warn("Firestore sync restriction active (offline window):", err.message);
-        });
+            if (pendingId) syncFromHash();
+        }, err => { console.warn('Firestore sync restriction:', err.message); if (!archive.length) renderShelf(); });
     }
 
+    /* ================= SHELF ================= */
+    function renderSkeleton() {
+        $('#mainGrid').innerHTML = Array.from({ length: 10 }, () => '<div><div class="skeleton book"></div><div class="skeleton line"></div></div>').join('');
+    }
     function renderShelf(data = archive) {
-        document.getElementById('mainGrid').innerHTML = data.map(s => `
-            <div class="col book-shelf-item" onclick="openFlipbook('${s.id}')">
+        const grid = $('#mainGrid');
+        $('#archiveStats').textContent = archive.length ? `${data.length} of ${archive.length} sermons · ${archive.reduce((a, s) => a + (s.views || 0), 0)} total views` : '';
+        if (!data.length) { grid.innerHTML = `<div class="empty-state">${archive.length ? 'No sermons match your search.' : 'No sermons in the archive yet.'}</div>`; return; }
+        grid.innerHTML = data.map(s => `
+            <div class="book-shelf-item" role="listitem button" tabindex="0" data-id="${esc(s.id)}" aria-label="Open ${esc(s.title)} by ${esc(s.speaker)}">
                 <div class="click-hint">CLICK TO OPEN</div>
                 <div class="book-3d-vertical">
-                    <div class="face spine"></div>
-                    <div class="face right-side"></div>
-                    <div class="face front"><img src="${s.img || ''}" alt="Cover"></div>
+                    <div class="face spine"></div><div class="face right-side"></div>
+                    <div class="face front">${s.img ? `<img src="${esc(s.img)}" alt="Cover of ${esc(s.title)}" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'cover-fallback',textContent:this.alt}))">` : `<div class="cover-fallback">${esc(s.title)}</div>`}</div>
                 </div>
-                <div class="mt-2 small fw-bold text-uppercase px-1 text-truncate" style="color:var(--gold); font-size:10px;">
-                    ${s.title}
-                </div>
-                <div class="shelf-stats">
-                    <span>❤️ ${s.likes || 0}</span>
-                    <span>👁️ ${s.views || 0}</span>
-                </div>
+                <div class="shelf-title text-truncate">${esc(s.title)}</div>
+                <div class="shelf-stats"><span>❤️ ${s.likes || 0}</span><span>👁️ ${s.views || 0}</span></div>
             </div>`).join('');
     }
+    $('#mainGrid').addEventListener('click', e => { const el = e.target.closest('.book-shelf-item'); if (el) openFlipbook(el.dataset.id); });
+    $('#mainGrid').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.book-shelf-item')) { e.preventDefault(); openFlipbook(e.target.dataset.id); } });
 
     function applyFilter() {
-        const term = document.getElementById('smartSearch').value.toLowerCase();
-        renderShelf(archive.filter(s => s.title.toLowerCase().includes(term) || s.speaker.toLowerCase().includes(term)));
-    }
-
-    function flipPage(num) {
-        playFlipSound();
-        if(num === 1) document.getElementById('p1').classList.add('flipped');
-        else if(num === 2) document.getElementById('p2').classList.add('flipped');
-        else { document.getElementById('p1').classList.remove('flipped'); document.getElementById('p2').classList.remove('flipped'); }
-    }
-
-    function toggleBookTheme() { document.querySelectorAll('.page').forEach(p => { p.classList.toggle('light-mode'); p.classList.toggle('dark-mode'); }); }
-    function changeLang(lang) { const select = document.querySelector('.goog-te-combo'); if (select) { select.value = lang; select.dispatchEvent(new Event('change')); } }
-
-    async function openFlipbook(id) {
-        activeEntry = archive.find(x => x.id === id);
-        document.getElementById('viewImg').innerHTML = `<img src="${activeEntry.img}" style="width:100%; height:100%; object-fit:cover; border:1px solid var(--gold);">`;
-        document.getElementById('viewTitle').innerText = activeEntry.title;
-        document.getElementById('viewMeta').innerHTML = `<b>Preacher:</b> ${activeEntry.speaker}<br><b>Venue:</b> ${activeEntry.venue}<br><b>Date:</b> ${activeEntry.date}`;
-        document.getElementById('viewSummary').innerHTML = activeEntry.summary || "";
-        document.getElementById('viewYT').href = activeEntry.link || "#";
-        document.getElementById('viewVerses').innerHTML = activeEntry.verses?.map(v => `<p class="mb-2"><b>${v.r}</b>: ${v.n}</p>`).join('') || "";
-        
-        document.getElementById('likeCount').innerText = activeEntry.likes || 0;
-        document.getElementById('viewCount').innerText = (activeEntry.views || 0) + 1;
-
-        document.getElementById('qrBox').innerHTML = "";
-        if(activeEntry.link) new QRCode(document.getElementById("qrBox"), { text: activeEntry.link, width: 60, height: 60 });
-        document.getElementById('adminCrudPanel').style.display = isAuthorized ? 'block' : 'none';
-        document.getElementById('p1').classList.remove('flipped'); document.getElementById('p2').classList.remove('flipped');
-        document.getElementById('flipbookOverlay').style.display = 'flex';
-
-        // Silently handles local environment updates if Firestore safety rules aren't completed yet
-        db.collection("sermons").doc(id).update({
-            views: firebase.firestore.FieldValue.increment(1)
-        }).catch(err => console.warn("Sync views missing permissions config update. Check Rules config tab."));
-    }
-
-    async function likeSermon() {
-        if(!activeEntry) return;
-        db.collection("sermons").doc(activeEntry.id).update({
-            likes: firebase.firestore.FieldValue.increment(1)
-        }).catch(err => alert("Could not save click interaction! Please ensure you paste and publish the custom Security Rules in the Firebase console."));
-    }
-
-    function closeBook() { document.getElementById('flipbookOverlay').style.display = 'none'; }
-
-    async function autoBible(input) {
-        if(!input.value) return;
-        const target = input.nextElementSibling;
-        target.value = "Searching Heaven's Archives...";
-        try {
-            const res = await fetch(`https://bible-api.com/${encodeURIComponent(input.value)}?translation=kjv`);
-            const data = await res.json();
-            target.value = data.text ? data.text.trim() : "Reference not found.";
-        } catch(e) { target.value = "Connection error. Loaded offline."; }
-    }
-
-    document.getElementById('editorForm').onsubmit = async function(e) {
-        e.preventDefault();
-        const id = document.getElementById('editId').value;
-        const entry = {
-            title: document.getElementById('fTitle').value,
-            speaker: document.getElementById('fSpeaker').value,
-            date: document.getElementById('fDate').value,
-            venue: document.getElementById('fVenue').value,
-            link: document.getElementById('fLink').value,
-            img: currentImgBase64,
-            summary: quill.root.innerHTML,
-            verses: Array.from(document.querySelectorAll('.verse-row')).map(row => ({
-                r: row.querySelector('.v-ref').value, n: row.querySelector('.v-text').value
-            }))
+        const term = $('#smartSearch').value.trim().toLowerCase(), sort = $('#sortSelect').value;
+        let list = archive.filter(s => !term || [s.title, s.speaker, s.venue, s.date, ...(s.verses || []).map(v => v.r)].some(f => String(f || '').toLowerCase().includes(term)));
+        const sorters = {
+            'date-desc': (a, b) => String(b.date || '').localeCompare(String(a.date || '')),
+            'date-asc': (a, b) => String(a.date || '').localeCompare(String(b.date || '')),
+            title: (a, b) => String(a.title || '').localeCompare(String(b.title || '')),
+            likes: (a, b) => (b.likes || 0) - (a.likes || 0), views: (a, b) => (b.views || 0) - (a.views || 0)
         };
-        if(id) {
-            await db.collection("sermons").doc(id).update(entry);
-        } else {
-            entry.likes = 0;
-            entry.views = 0;
-            await db.collection("sermons").add(entry);
+        renderShelf(list.sort(sorters[sort]));
+    }
+    let searchT; $('#smartSearch').addEventListener('input', () => { clearTimeout(searchT); searchT = setTimeout(applyFilter, 150); });
+    $('#sortSelect').value = store.get('sort', 'date-desc');
+    $('#sortSelect').addEventListener('change', () => { store.set('sort', $('#sortSelect').value); applyFilter(); });
+
+    /* ================= READER ================= */
+    const pages = () => [$('#p1'), $('#p2'), $('#p3')];
+    function setPage(n) {
+        n = Math.max(0, Math.min(2, n));
+        if (n !== curPage) playFlipSound();
+        curPage = n;
+        const [p1, p2, p3] = pages();
+        p1.classList.toggle('flipped', n >= 1); p2.classList.toggle('flipped', n >= 2);
+        p1.inert = n >= 1; p2.inert = n !== 1; p3.inert = n !== 2;
+        $('#pager').textContent = `${n + 1} / 3`;
+    }
+    function flipPage(num) { setPage(num === 1 ? 1 : num === 2 ? 2 : 0); } // legacy API kept
+    function refreshCounts() {
+        $('#likeCount').innerText = activeEntry.likes || 0; $('#viewCount').innerText = activeEntry.views || 0;
+        const liked = store.get('liked', []).includes(activeEntry.id);
+        $('#likeBtn').classList.toggle('active', liked); $('#likeBtn').setAttribute('aria-pressed', liked);
+    }
+    function toggleBookTheme(init) {
+        let dark = store.get('bookDark', false);
+        if (init !== true) { dark = !dark; store.set('bookDark', dark); }
+        $$('.page').forEach(p => { p.classList.toggle('dark-mode', dark); p.classList.toggle('light-mode', !dark); });
+    }
+    const shareUrl = id => location.href.split('#')[0] + '#s=' + encodeURIComponent(id);
+
+    function openFlipbook(id) {
+        const e = archive.find(x => x.id === id); if (!e) return;
+        history.pushState({ s: id }, '', '#s=' + encodeURIComponent(id));
+        showBook(e);
+    }
+    function showBook(e) {
+        activeEntry = e;
+        lastFocus = document.activeElement;
+        $('#viewImg').innerHTML = e.img ? `<img src="${esc(e.img)}" alt="Cover of ${esc(e.title)}" style="width:100%;height:100%;object-fit:cover;border:1px solid var(--gold);">` : `<div class="cover-fallback" style="height:100%">${esc(e.title)}</div>`;
+        $('#viewTitle').textContent = e.title;
+        $('#viewMeta').innerHTML = `<b>Preacher:</b> ${esc(e.speaker)}<br><b>Venue:</b> ${esc(e.venue)}<br><b>Date:</b> ${esc(fmtDate(e.date))}`;
+        $('#viewSummary').innerHTML = sanitize(e.summary);
+        const words = htmlToText(e.summary).split(/\s+/).filter(Boolean).length;
+        $('#readTime').textContent = words ? `≈ ${Math.max(1, Math.round(words / 200))} min read · ${words} words` : '';
+        const yt = $('#viewYT'); yt.href = e.link || '#'; yt.classList.toggle('disabled', !e.link);
+        $('#viewVerses').innerHTML = (e.verses || []).map(v => `<p class="mb-2"><b>${esc(v.r)}</b>: ${esc(v.n)}</p>`).join('');
+        $('#qrBox').innerHTML = ''; if (e.link) try { new QRCode($('#qrBox'), { text: e.link, width: 60, height: 60 }); } catch { }
+        $('#adminCrudPanel').style.display = isAuthorized ? 'block' : 'none';
+        // views: count once per session per sermon
+        const seen = (() => { try { return JSON.parse(sessionStorage.getItem('viewed') || '[]'); } catch { return []; } })();
+        let displayed = e.views || 0;
+        if (!seen.includes(e.id)) {
+            displayed++; try { sessionStorage.setItem('viewed', JSON.stringify([...seen, e.id])); } catch { }
+            db.collection('sermons').doc(e.id).update({ views: firebase.firestore.FieldValue.increment(1) }).catch(() => console.warn('Views sync needs Firestore rules permitting counter updates.'));
         }
-        bootstrap.Modal.getInstance(document.getElementById('editorModal')).hide();
+        refreshCounts(); $('#viewCount').innerText = displayed;
+        setPage(0); curPage = 0; $('#pager').textContent = '1 / 3';
+        $('#flipbookOverlay').classList.add('open'); document.body.classList.add('no-scroll');
+        $$('.page').forEach(p => p.scrollTop = 0);
+        setTimeout(() => $('#closeBtn').focus(), 50);
+        document.title = `${e.title} | Kingdom Come`;
+    }
+    function hideBook() {
+        $('#flipbookOverlay').classList.remove('open'); document.body.classList.remove('no-scroll');
+        document.title = 'Kingdom Come | Firebase Executive Archive';
+        if (lastFocus && lastFocus.focus) lastFocus.focus();
+    }
+    function closeBook() {
+        if (history.state && history.state.s) history.back();
+        else { hideBook(); if (location.hash) history.replaceState(null, '', location.pathname + location.search); }
+    }
+    function syncFromHash() {
+        const m = location.hash.match(/^#s=(.+)$/);
+        if (m) {
+            const id = decodeURIComponent(m[1]), e = archive.find(x => x.id === id);
+            if (e) { pendingId = null; if (!$('#flipbookOverlay').classList.contains('open') || activeEntry?.id !== id) showBook(e); } else pendingId = id;
+        } else if ($('#flipbookOverlay').classList.contains('open')) hideBook();
+    }
+    window.addEventListener('popstate', syncFromHash);
+    window.addEventListener('hashchange', syncFromHash);
+    if (location.hash.startsWith('#s=')) pendingId = decodeURIComponent(location.hash.slice(3));
+
+    // Keyboard, focus trap, swipe
+    document.addEventListener('keydown', e => {
+        if (!$('#flipbookOverlay').classList.contains('open') || document.querySelector('.modal.show')) return;
+        if (e.key === 'Escape') closeBook();
+        else if (e.key === 'ArrowRight') setPage(curPage + 1);
+        else if (e.key === 'ArrowLeft') setPage(curPage - 1);
+        else if (e.key === 'Tab') {
+            const f = $$('#flipbookOverlay button, #flipbookOverlay a[href], #flipbookOverlay [tabindex]:not([tabindex="-1"])').filter(el => !el.closest('[inert]') && el.offsetParent !== null);
+            if (!f.length) return; const first = f[0], last = f[f.length - 1];
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+    });
+    (() => {
+        const el = $('#bookContainer'); let sx = 0, sy = 0;
+        el.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+        el.addEventListener('touchend', e => {
+            const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+            if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) setPage(curPage + (dx < 0 ? 1 : -1));
+        }, { passive: true });
+    })();
+
+    /* ================= LIKE ================= */
+    async function likeSermon() {
+        if (!activeEntry) return;
+        const liked = store.get('liked', []), has = liked.includes(activeEntry.id);
+        const delta = has ? -1 : 1;
+        store.set('liked', has ? liked.filter(i => i !== activeEntry.id) : [...liked, activeEntry.id]);
+        activeEntry.likes = Math.max(0, (activeEntry.likes || 0) + delta); refreshCounts();
+        db.collection('sermons').doc(activeEntry.id).update({ likes: firebase.firestore.FieldValue.increment(delta) })
+            .catch(() => toast('Could not save your like. Publish the Firestore Security Rules that allow counter updates.', true, 5000));
+    }
+
+    /* ================= SHARE ================= */
+    async function shareSermon() {
+        if (!activeEntry) return;
+        const url = shareUrl(activeEntry.id), data = { title: activeEntry.title, text: `${activeEntry.title} — ${activeEntry.speaker}`, url };
+        if (navigator.share) { try { await navigator.share(data); return; } catch (err) { if (err.name === 'AbortError') return; } }
+        $('#shareUrl').value = url;
+        const t = encodeURIComponent(data.text), u = encodeURIComponent(url);
+        const links = [
+            ['WhatsApp', `https://wa.me/?text=${t}%20${u}`], ['Telegram', `https://t.me/share/url?url=${u}&text=${t}`],
+            ['Facebook', `https://www.facebook.com/sharer/sharer.php?u=${u}`], ['X / Twitter', `https://twitter.com/intent/tweet?text=${t}&url=${u}`],
+            ['Email', `mailto:?subject=${t}&body=${t}%0A${u}`], ['SMS', `sms:?&body=${t}%20${u}`]
+        ];
+        $('#shareGrid').innerHTML = links.map(([n, h]) => `<a class="btn btn-outline-dark btn-sm" target="_blank" rel="noopener noreferrer" href="${h}">${n}</a>`).join('');
+        new bootstrap.Modal('#shareModal').show();
+    }
+    const copyLink = () => activeEntry && copyText(shareUrl(activeEntry.id), 'Link copied');
+    const copySummary = () => activeEntry && copyText(`${activeEntry.title} — ${activeEntry.speaker}\n\n${htmlToText(activeEntry.summary)}`, 'Summary copied');
+
+    /* ================= DOCUMENT BUILD (PDF + PRINT) ================= */
+    function applyPaper(el) { const p = PAPER[paper]; el.style.setProperty('--cw', p.cw); el.style.setProperty('--ch', p.ch); }
+    function setPaper(v) { paper = v; store.set('paper', v); updatePageRule(); $('#paperSelect').value = v; toast('Paper: ' + PAPER[v].css); }
+    function updatePageRule() {
+        let s = $('#pageRule'); if (!s) { s = document.createElement('style'); s.id = 'pageRule'; document.head.appendChild(s); }
+        s.textContent = `@page { size: ${PAPER[paper].css}; margin: 12mm; }`;
+    }
+    function buildDocHTML(e) {
+        const qr = e.link ? qrDataUrl(e.link, 160) : '';
+        const verses = (e.verses || []).map(v => `<div class="doc-verse"><strong>${esc(v.r)}</strong><span>${esc(v.n)}</span></div>`).join('');
+        return `
+            <div class="doc-cover">
+                <div class="doc-brand">KINGDOM COME</div>
+                ${e.img ? `<div class="doc-cover-img"><img src="${esc(e.img)}" alt=""></div>` : ''}
+                <h1>${esc(e.title)}</h1><h2>By ${esc(e.speaker)}</h2>
+                <p>${esc(fmtDate(e.date))}${e.venue ? ' | ' + esc(e.venue) : ''}</p>
+            </div>
+            <div class="doc-sec brk"><h2>Executive Summary</h2><div class="rich">${sanitize(e.summary)}</div></div>
+            <div class="doc-sec"><h2>Scriptures</h2>${verses || '<p style="color:#888">No scriptures recorded.</p>'}
+                <div class="doc-qr"><h4>DIGITAL ARCHIVE ACCESS</h4>${qr ? `<img src="${qr}" alt="QR code">` : ''}<p>${esc(e.link || '')}</p></div>
+                <div class="doc-foot">Kingdom Come Archive · Generated ${esc(new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date()))}</div>
+            </div>`;
+    }
+    async function imagesReady(root) {
+        await (document.fonts?.ready || Promise.resolve());
+        await Promise.all($$('img', root).map(img => img.complete ? Promise.resolve() : new Promise(r => { img.onload = img.onerror = r; })));
+        await wait(100);
+    }
+    async function renderPDF(html, filename) {
+        const stage = $('#pdfStage'); stage.innerHTML = `<div class="doc-root" id="pdfDoc">${html}</div>`;
+        const el = $('#pdfDoc'); applyPaper(el); await imagesReady(el);
+        const opt = {
+            margin: 12, filename, image: { type: 'jpeg', quality: .98 },
+            html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0 },
+            jsPDF: { unit: 'mm', format: PAPER[paper].fmt, orientation: 'portrait', compress: true },
+            pagebreak: { mode: ['css', 'legacy'], avoid: ['.doc-verse', '.doc-qr', 'tr'] }
+        };
+        try { return await html2pdf().set(opt).from(el).outputPdf('blob'); } finally { stage.innerHTML = ''; }
+    }
+    const pdfName = e => `Archive_${safeName(e.title)}.pdf`;
+    async function exportFullPDF() {
+        if (!activeEntry) return;
+        toast('Building PDF…');
+        try { download(await renderPDF(buildDocHTML(activeEntry), pdfName(activeEntry)), pdfName(activeEntry)); toast('PDF ready'); }
+        catch (err) { console.error(err); toast('PDF export failed: ' + err.message, true); }
+    }
+    async function sharePDF() {
+        if (!activeEntry) return;
+        toast('Building PDF…');
+        try {
+            const blob = await renderPDF(buildDocHTML(activeEntry), pdfName(activeEntry));
+            const file = new File([blob], pdfName(activeEntry), { type: 'application/pdf' });
+            if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: activeEntry.title });
+            else { download(blob, file.name); toast('Sharing files is unsupported here — downloaded instead'); }
+        } catch (err) { if (err.name !== 'AbortError') toast('Could not share PDF: ' + err.message, true); }
+    }
+    async function printHTML(html) {
+        const root = $('#printRoot'); root.innerHTML = html; applyPaper(root); updatePageRule();
+        await imagesReady(root);
+        const clean = () => { root.innerHTML = ''; window.removeEventListener('afterprint', clean); };
+        window.addEventListener('afterprint', clean); window.print();
+    }
+    const printEntry = () => activeEntry && printHTML(buildDocHTML(activeEntry));
+    function printCatalog() {
+        if (!archive.length) return toast('Nothing to print', true);
+        const rows = [...archive].map((s, i) => `<tr><td>${i + 1}</td><td><b>${esc(s.title)}</b></td><td>${esc(s.speaker)}</td><td>${esc(fmtDate(s.date))}</td><td>${esc(s.venue)}</td></tr>`).join('');
+        printHTML(`<div class="doc-sec"><h2>Kingdom Come — Sermon Catalog</h2><table class="doc-table"><thead><tr><th>#</th><th>Theme</th><th>Preacher</th><th>Date</th><th>Venue</th></tr></thead><tbody>${rows}</tbody></table><div class="doc-foot">${archive.length} sermons</div></div>`);
+    }
+
+    /* ================= OTHER EXPORTS ================= */
+    function entryText(e) {
+        return [`${e.title}`, `Preacher: ${e.speaker}`, `Venue: ${e.venue || ''}`, `Date: ${fmtDate(e.date)}`, e.link ? `Video: ${e.link}` : '', '', 'EXECUTIVE SUMMARY', htmlToText(e.summary), '', 'SCRIPTURES', ...(e.verses || []).map(v => `${v.r}: ${v.n}`)].filter((l, i, a) => l !== '' || a[i - 1] !== '').join('\n');
+    }
+    const exportText = () => activeEntry && download(new Blob([entryText(activeEntry)], { type: 'text/plain;charset=utf-8' }), `${safeName(activeEntry.title)}.txt`);
+    function exportMarkdown() {
+        const e = activeEntry; if (!e) return;
+        const md = `# ${e.title}\n\n**Preacher:** ${e.speaker}  \n**Venue:** ${e.venue || ''}  \n**Date:** ${fmtDate(e.date)}  \n${e.link ? `**Video:** ${e.link}\n` : ''}\n## Executive Summary\n\n${htmlToMd(e.summary)}\n\n## Scriptures\n\n${(e.verses || []).map(v => `> **${v.r}** — ${v.n}`).join('\n\n')}\n`;
+        download(new Blob([md], { type: 'text/markdown;charset=utf-8' }), `${safeName(e.title)}.md`);
+    }
+    const exportEntryJSON = () => activeEntry && download(new Blob([JSON.stringify(activeEntry, null, 2)], { type: 'application/json' }), `${safeName(activeEntry.title)}.json`);
+    function downloadICS() {
+        const e = activeEntry; if (!e || !e.date) return toast('This sermon has no date', true);
+        const d = e.date.replace(/-/g, ''), nx = new Date(e.date + 'T00:00:00'); nx.setDate(nx.getDate() + 1);
+        const d2 = nx.toISOString().slice(0, 10).replace(/-/g, ''), fold = s => String(s || '').replace(/[\\;,]/g, m => '\\' + m).replace(/\n/g, '\\n');
+        const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Kingdom Come//Archive//EN', 'BEGIN:VEVENT', `UID:${e.id}@kingdomcome`, `DTSTAMP:${new Date().toISOString().replace(/[-:]|\.\d{3}/g, '')}`,
+            `DTSTART;VALUE=DATE:${d}`, `DTEND;VALUE=DATE:${d2}`, `SUMMARY:${fold(e.title)}`, `LOCATION:${fold(e.venue)}`, `DESCRIPTION:${fold(`Preacher: ${e.speaker}\n${e.link || ''}`)}`, 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+        download(new Blob([ics], { type: 'text/calendar;charset=utf-8' }), `${safeName(e.title)}.ics`);
+    }
+    function exportArchiveJSON() { download(new Blob([JSON.stringify(archive, null, 2)], { type: 'application/json' }), `kingdom-come-archive-${new Date().toISOString().slice(0, 10)}.json`); toast('Archive exported'); }
+    function exportArchiveCSV() {
+        const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+        const head = ['id', 'title', 'speaker', 'date', 'venue', 'link', 'likes', 'views', 'summary', 'scriptures'];
+        const rows = archive.map(s => [s.id, s.title, s.speaker, s.date, s.venue, s.link, s.likes || 0, s.views || 0, htmlToText(s.summary), (s.verses || []).map(v => `${v.r}: ${v.n}`).join(' | ')].map(q).join(','));
+        download(new Blob(['\uFEFF' + head.join(',') + '\r\n' + rows.join('\r\n')], { type: 'text/csv;charset=utf-8' }), `kingdom-come-archive-${new Date().toISOString().slice(0, 10)}.csv`);
+        toast('CSV exported');
+    }
+    $('#importFile').onchange = async e => {
+        const f = e.target.files[0]; e.target.value = ''; if (!f || !isAuthorized) return;
+        try {
+            const arr = JSON.parse(await f.text()); if (!Array.isArray(arr)) throw new Error('File must contain a JSON array');
+            if (!confirm(`Import ${arr.length} sermons? Entries with existing IDs will be overwritten.`)) return;
+            for (let i = 0; i < arr.length; i += 400) {
+                const batch = db.batch();
+                arr.slice(i, i + 400).forEach(it => { const { id, ...data } = it; if (!data.title) return; batch.set(id ? db.collection('sermons').doc(String(id)) : db.collection('sermons').doc(), { likes: 0, views: 0, ...data }); });
+                await batch.commit();
+            }
+            toast('Import complete');
+        } catch (err) { toast('Import failed: ' + err.message, true, 5000); }
     };
 
-    function addVerseLine(r="", n="") {
-        const d = document.createElement('div'); d.className = "input-group mb-2 verse-row";
-        d.innerHTML = `<input type="text" value="${r}" class="form-control form-control-sm v-ref" placeholder="Ref (e.g. John 3:16)" onblur="autoBible(this)"><textarea class="form-control form-control-sm v-text" rows="2" placeholder="Scripture text will appear here...">${n}</textarea>`;
-        document.getElementById('verseContainer').appendChild(d);
+    /* ================= EDITOR ================= */
+    const bibleCache = new Map();
+    async function autoBible(input) {
+        const ref = input.value.trim(), ta = input.closest('.verse-row').querySelector('.v-text'), tr = $('#bibleTr').value;
+        if (!ref || input.dataset.last === ref + '|' + tr) return;
+        input.dataset.last = ref + '|' + tr; ta.value = "Searching Heaven's Archives...";
+        const key = ref.toLowerCase() + '|' + tr;
+        try {
+            if (!bibleCache.has(key)) {
+                const res = await fetch(`https://bible-api.com/${encodeURIComponent(ref)}?translation=${tr}`);
+                if (!res.ok) throw new Error('not found');
+                const data = await res.json(); bibleCache.set(key, data.text ? data.text.trim() : 'Reference not found.');
+            }
+            ta.value = bibleCache.get(key);
+        } catch (e) { ta.value = navigator.onLine ? 'Reference not found.' : 'Connection error. Loaded offline.'; }
     }
-
+    function addVerseLine(r = '', n = '') {
+        const d = document.createElement('div'); d.className = 'input-group mb-2 verse-row';
+        const ref = Object.assign(document.createElement('input'), { type: 'text', className: 'form-control form-control-sm v-ref', placeholder: 'Ref (e.g. John 3:16)', value: r });
+        const tx = Object.assign(document.createElement('textarea'), { className: 'form-control form-control-sm v-text', rows: 2, placeholder: 'Scripture text will appear here...', value: n });
+        const rm = Object.assign(document.createElement('button'), { type: 'button', className: 'btn btn-sm btn-outline-danger', textContent: '×', title: 'Remove scripture', onclick: () => d.remove() });
+        rm.setAttribute('aria-label', 'Remove scripture');
+        if (n) ref.dataset.last = r + '|' + $('#bibleTr').value;
+        ref.addEventListener('blur', () => autoBible(ref));
+        d.append(ref, tx, rm); $('#verseContainer').appendChild(d);
+    }
     function openForm(id = null) {
-        document.getElementById('editorForm').reset(); quill.root.innerHTML = "";
-        document.getElementById('verseContainer').innerHTML = ""; document.getElementById('editId').value = id || "";
-        if(id) {
-            const s = archive.find(x => x.id == id);
-            document.getElementById('fTitle').value = s.title; document.getElementById('fSpeaker').value = s.speaker;
-            document.getElementById('fDate').value = s.date; document.getElementById('fVenue').value = s.venue;
-            document.getElementById('fLink').value = s.link; quill.root.innerHTML = s.summary;
-            currentImgBase64 = s.img; s.verses?.forEach(v => addVerseLine(v.r, v.n));
-        } else { addVerseLine(); }
-        new bootstrap.Modal(document.getElementById('editorModal')).show();
+        $('#editorForm').reset(); quill.setContents([]); $('#verseContainer').innerHTML = ''; $('#editId').value = id || '';
+        currentImgBase64 = ''; $('#coverPreview').style.display = 'none';
+        if (id) {
+            const s = archive.find(x => x.id == id); if (!s) return;
+            $('#fTitle').value = s.title || ''; $('#fSpeaker').value = s.speaker || ''; $('#fDate').value = s.date || ''; $('#fVenue').value = s.venue || ''; $('#fLink').value = s.link || '';
+            quill.clipboard.dangerouslyPasteHTML(sanitize(s.summary || ''));
+            currentImgBase64 = s.img || ''; if (currentImgBase64) { $('#coverPreview').src = currentImgBase64; $('#coverPreview').style.display = 'block'; }
+            (s.verses || []).forEach(v => addVerseLine(v.r, v.n));
+        } else addVerseLine();
+        $('#editorTitle').textContent = id ? 'Edit Sermon' : 'Add Sermon';
+        new bootstrap.Modal('#editorModal').show();
     }
-
-    document.getElementById('fileIn').onchange = (e) => {
+    $('#fileIn').onchange = e => {
+        const f = e.target.files[0]; if (!f) return;
         const r = new FileReader();
-        r.onload = (ev) => {
+        r.onload = ev => {
             const img = new Image();
             img.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = 400; canvas.height = 550;
-                canvas.getContext('2d').drawImage(img, 0, 0, 400, 550);
-                currentImgBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                const W = 400, H = 550, c = document.createElement('canvas'); c.width = W; c.height = H;
+                const s = Math.max(W / img.width, H / img.height), sw = W / s, sh = H / s; // cover-crop, no distortion
+                c.getContext('2d').drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, 0, 0, W, H);
+                currentImgBase64 = c.toDataURL('image/jpeg', .72);
+                $('#coverPreview').src = currentImgBase64; $('#coverPreview').style.display = 'block';
             };
+            img.onerror = () => toast('Could not read that image', true);
             img.src = ev.target.result;
         };
-        if(e.target.files[0]) r.readAsDataURL(e.target.files[0]);
+        r.readAsDataURL(f);
     };
-
-    function exportFullPDF() {
-        const qrCanvas = document.querySelector("#qrBox canvas");
-        const qrData = qrCanvas ? qrCanvas.toDataURL("image/png") : "";
-        const pdfContent = document.createElement('div');
-        pdfContent.style.width = "8.5in";
-        pdfContent.style.backgroundColor = "#ffffff";
-        pdfContent.style.color = "#1a1a1a";
-        pdfContent.innerHTML = `
-            <div style="font-family: 'Montserrat', sans-serif; background: #fff; color: #111;">
-                <div style="min-height: 10.4in; border: 20px solid #c5a059; padding: 40px; text-align: center; box-sizing: border-box; page-break-after: always; background:#fff;">
-                    <div style="font-family: 'Cinzel'; color: #c5a059; letter-spacing: 5px; border-bottom: 2px solid #c5a059; display: inline-block; padding-bottom: 5px; margin-bottom: 40px; font-size: 24px; font-weight: bold;">KINGDOM COME</div>
-                    <div style="width: 320px; height: 440px; margin: 0 auto; border: 5px double #c5a059; padding: 5px; background: #fafafa;">
-                        <img src="${activeEntry.img}" style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>
-                    <h1 style="font-family: 'Cinzel'; font-size: 2.2rem; margin-top: 30px; text-transform: uppercase; color:#1a1a1a;">${activeEntry.title}</h1>
-                    <h2 style="font-weight: 400; color: #444; font-size: 1.4rem;">By ${activeEntry.speaker}</h2>
-                    <p style="margin-top: 40px; font-weight: 600; letter-spacing: 1px; color: #666;">${activeEntry.date} | ${activeEntry.venue}</p>
-                </div>
-                <div style="min-height: 10.4in; border: 20px solid #c5a059; padding: 50px; box-sizing: border-box; page-break-after: always; background:#fff;">
-                    <h2 style="font-family: 'Cinzel'; border-left: 5px solid #c5a059; padding-left: 15px; color:#c5a059;">Executive Summary</h2>
-                    <div style="line-height: 1.8; margin-top: 20px; text-align: justify; font-size: 12pt; color:#222;">${activeEntry.summary}</div>
-                </div>
-                <div style="min-height: 10.4in; border: 20px solid #c5a059; padding: 50px; box-sizing: border-box; background:#fff; position: relative;">
-                    <h2 style="font-family: 'Cinzel'; border-left: 5px solid #c5a059; padding-left: 15px; color:#c5a059;">Scriptures</h2>
-                    <div style="margin-top: 20px; margin-bottom: 120px;">
-                        ${activeEntry.verses ? activeEntry.verses.map(v => `
-                            <div style="margin-bottom: 20px; page-break-inside: avoid;">
-                                <strong style="color:#1a1a1a; font-size:11pt;">${v.r}</strong><br>
-                                <span style="color: #444; font-style: italic; font-size:10.5pt; line-height:1.5;">${v.n}</span>
-                            </div>
-                        `).join('') : ''}
-                    </div>
-                    <div style="position: absolute; bottom: 40px; left: 50px; right: 50px; border: 2px dashed #c5a059; padding: 15px; text-align: center; background: #fafafa; page-break-inside: avoid;">
-                        <h4 style="font-family: 'Cinzel'; margin: 0; font-size: 10pt; color:#c5a059; letter-spacing:1px;">DIGITAL ARCHIVE ACCESS</h4>
-                        ${qrData ? `<img src="${qrData}" style="width: 70px; margin: 10px 0;">` : ""}
-                        <p style="font-size: 8.5pt; color: #ff0000; font-weight: bold; word-break: break-all; margin:0;">${activeEntry.link || ''}</p>
-                    </div>
-                </div>
-            </div>`;
-
-        const opt = { 
-            margin: 0, 
-            filename: `Archive_${activeEntry.title.replace(/\s+/g, '_')}.pdf`, 
-            image: { type: 'jpeg', quality: 0.98 }, 
-            html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' }, 
-            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
+    $('#editorForm').onsubmit = async function (e) {
+        e.preventDefault();
+        const link = $('#fLink').value.trim();
+        const entry = {
+            title: $('#fTitle').value.trim(), speaker: $('#fSpeaker').value.trim(), date: $('#fDate').value, venue: $('#fVenue').value.trim(), link,
+            img: currentImgBase64, summary: sanitize(quill.root.innerHTML),
+            verses: $$('.verse-row').map(row => ({ r: $('.v-ref', row).value.trim(), n: $('.v-text', row).value.trim() })).filter(v => v.r || v.n)
         };
-
-        setTimeout(() => {
-            html2pdf().set(opt).from(pdfContent).save();
-        }, 600);
+        const btn = $('#saveBtn'); btn.disabled = true; btn.textContent = 'SAVING…';
+        try {
+            const id = $('#editId').value;
+            if (id) await db.collection('sermons').doc(id).update(entry);
+            else { entry.likes = 0; entry.views = 0; await db.collection('sermons').add(entry); }
+            bootstrap.Modal.getInstance($('#editorModal')).hide(); toast('Saved to cloud archive');
+        } catch (err) { toast('Save failed: ' + err.message, true, 5000); }
+        finally { btn.disabled = false; btn.textContent = 'SAVE TO CLOUD ARCHIVE'; }
+    };
+    function editCurrent() { const id = activeEntry.id; closeBook(); setTimeout(() => openForm(id), 150); }
+    async function deleteCurrent() {
+        if (!confirm('Delete sermon?')) return;
+        try { await db.collection('sermons').doc(activeEntry.id).delete(); closeBook(); toast('Sermon deleted'); }
+        catch (err) { toast('Delete failed: ' + err.message, true); }
     }
 
-    function editCurrent() { closeBook(); openForm(activeEntry.id); }
-    async function deleteCurrent() { if(confirm("Delete sermon?")) { await db.collection("sermons").doc(activeEntry.id).delete(); closeBook(); }}
+    /* ================= LANGUAGE ================= */
+    function changeLang(lang, tries = 0) {
+        document.documentElement.lang = lang; store.set('lang', lang);
+        const select = $('.goog-te-combo');
+        if (select) { select.value = lang; select.dispatchEvent(new Event('change')); }
+        else if (tries < 10) setTimeout(() => changeLang(lang, tries + 1), 400);
+        else toast('Translator is unavailable right now', true);
+    }
+
+    /* ================= ONLINE / INIT ================= */
+    const syncOnline = () => document.body.classList.toggle('offline', !navigator.onLine);
+    window.addEventListener('online', () => { syncOnline(); toast('Back online'); }); window.addEventListener('offline', syncOnline); syncOnline();
+    $('#paperSelect').value = paper; updatePageRule();
+    $('#soundBtn').textContent = soundOn ? '🔊' : '🔇';
+    toggleBookTheme(true);
+    const savedLang = store.get('lang', 'en'); if (savedLang !== 'en') { $('#langSelect').value = savedLang; changeLang(savedLang); }
+    renderSkeleton();
 </script>
 </body>
 </html>
